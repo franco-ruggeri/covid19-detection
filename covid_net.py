@@ -1,5 +1,4 @@
-import numpy as np
-import tensorflow as tf
+from tensorflow.keras import Model
 from tensorflow.keras.layers import Layer, Conv2D, ZeroPadding2D
 
 
@@ -28,3 +27,14 @@ class PEPX(Layer):
         x = self.dw(x)
         x = self.p2(x)
         return self.x(x)
+
+
+class COVIDNet(Model):
+    def __init__(self):
+        super(COVIDNet, self).__init__()
+        # TODO: add layers here
+        pass
+
+    def call(self, x):
+        # TODO: add forward pass here
+        pass
