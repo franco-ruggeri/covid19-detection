@@ -22,41 +22,23 @@ with open('data/train_split_v3.txt') as f:
 with open('data/test_split_v3.txt') as fr:
     testfiles = fr.readlines()
 
-special_cases = ['PA', 'AP', 'Supine', 'semi', 'erect']
 
+pathogens = ['normal', 'pneumonia', 'COVID-19']
 for item in trainfiles:
 
-    if item.split()[-1] == 'Supine':
-        train_dataset[item.split()[-3]].append(item.split()[1])
+    for index, sub_item in enumerate(item.split()):
 
-    elif item.split()[-1] == 'erect':
-        train_dataset[item.split()[-4]].append(item.split()[1])
+        if sub_item in pathogens:
 
-    elif item.split()[-1] == 'PA':
-        train_dataset[item.split()[-2]].append(item.split()[1])
-
-    elif item.split()[-1] == 'AP':
-        train_dataset[item.split()[-2]].append(item.split()[1])
-
-    else:
-        train_dataset[item.split()[-1]].append(item.split()[1])
+            train_dataset[sub_item].append(item.split()[index-1])
 
 for item in testfiles:
 
-    if item.split()[-1] == 'Supine':
-        test_dataset[item.split()[-3]].append(item.split()[1])
+    for index, sub_item in enumerate(item.split()):
 
-    elif item.split()[-1] == 'erect':
-        test_dataset[item.split()[-4]].append(item.split()[1])
+        if sub_item in pathogens:
 
-    elif item.split()[-1] == 'PA':
-        test_dataset[item.split()[-2]].append(item.split()[1])
-
-    elif item.split()[-1] == 'AP':
-        test_dataset[item.split()[-2]].append(item.split()[1])
-
-    else:
-        test_dataset[item.split()[-1]].append(item.split()[1])
+            test_dataset[sub_item].append(item.split()[index-1])
 
 path = 'data'
 train_dir = os.path.join(path, 'train')
