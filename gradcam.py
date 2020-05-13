@@ -1,24 +1,30 @@
 import tensorflow as tf
 import numpy as np
 import cv2
+import imutils
 from tensorflow.keras.models import Model
+
+
 
 class GradCAM:
 
     """Implementation of Grad-CAM using tensorflow and keras"""
 
-    def __init__(self, model, class_index, layer_name=None):
+    def __init__(self, model, image_path, class_index=None, layer_name=None):
 
         """
 
-        :param model: The tensorflow model of the network
-        :param class_index: The index of the class the network is prediciting, will probably be 0: normal, 1: pneumonia
-        2: COVID-19
+        :param model: The tensorflow model used
+        :param image_path: The directory path to the image
+        :param class_index: Most probable class label
         :param layer_name: Name of the last convolutional layer
 
         """
 
         self.model = model
+        self.original_image = cv2.imread(image_path)
+        self.image = None
+        self.is_image_preprocessed = False
         self.class_index = class_index
         self.layer_name = layer_name
 
@@ -26,6 +32,29 @@ class GradCAM:
         if layer_name is None:
 
             self.layer_name = self.find_layer()
+
+        if class_index is None:
+
+            if self.is_image_preprocessed is False:
+                self.image = self.preprocess_image(image_path)
+                self.is_image_preprocessed = True
+
+            self.class_index = self.find_class_index(self.image)
+
+    def preprocess_image(self, image_path):
+        """
+
+        :param image_path: The directory path to the image
+        :return: The preprocessed image
+
+        """
+
+        image = tf.keras.preprocessing.image.load_img(image_path, target_size=(224, 224))
+        image = tf.keras.preprocessing.image.img_to_array(image)
+        image = np.expand_dims(image, axis=0)
+        image = tf.keras.applications.imagenet_utils.preprocess_input(image)
+
+        return image
 
     def find_layer(self):
         """
@@ -46,54 +75,70 @@ class GradCAM:
 
         raise ValueError("Could not find a matching convolutional layer, its output shape should be 4 dimensional")
 
-    def generate_heatmap(self, image, eps=1e-8):
+    def find_class_index(self, image):
         """
 
-        :param image_path: The path to the image that is to be viewed using GradCAM
-        :return: A tuple containing the heatmap and output (which is the input image overlayed with the heatmap)
+        Assuming tensorflow has been used to construct the network, this method extracts the most probable label for
+        the image.
+
+        :param image: A preprocessed image, using tf.keras.preprocessing
+        :return: The most likely label
 
         """
 
-        #image = tf.keras.preprocessing.image.load_img(image_path, target_size=(224, 224))
-        #image = tf.keras.preprocessing.image.img_to_array(image)
+        predictions = self.model.predict(image)
+        class_index = np.argmax(predictions[0])
+        return class_index
 
-        grad_model = tf.keras.models.Model(inputs=[self.model.inputs],outputs=[self.model.get_layer(self.layer_name).output,
-                                           self.model.output])
+    def generate_and_visualize_heatmap(self, alpha=0.5, eps=1e-8):
 
-        with tf.GradientTape() as tape:
-            inputs = tf.cast(image, tf.float32)
-            (convolutional_outputs, predictions) = grad_model(inputs)
-            loss = predictions[:, self.class_index]
+        """Generates and visualizes the heatmap used for GradCAM"""
 
-        #output = convolutional_outputs[0]
-        gradients = tape.gradient(loss, convolutional_outputs)
+        if self.is_image_preprocessed:
 
-        cast_conv_outputs = tf.cast(convolutional_outputs > 0, "float32")
-        cast_gradients = tf.cast(gradients > 0, "float32")
-        guided_gradients = cast_conv_outputs * cast_gradients * gradients
+            grad_model = tf.keras.models.Model(inputs=[self.model.inputs],
+                                               outputs=[self.model.get_layer(self.layer_name).output,
+                                               self.model.output])
 
-        convolutional_outputs = convolutional_outputs[0]
-        guided_gradients = guided_gradients[0]
+            with tf.GradientTape() as tape:
+                inputs = tf.cast(self.image, tf.float32)
+                convolutional_outputs, predictions = grad_model(inputs)
+                loss = predictions[:, self.class_index]
 
-        weights = tf.reduce_mean(guided_gradients, axis=(0, 1))
-        cam = tf.reduce_sum(tf.multiply(weights, convolutional_outputs), axis=-1)
+            #output = convolutional_outputs[0]
+            gradients = tape.gradient(loss, convolutional_outputs)
 
-        width, height = image.shape[2], image.shape[1]
-        heatmap = cv2.resize(cam.numpy(), (width, height))
+            cast_conv_outputs = tf.cast(convolutional_outputs > 0, "float32")
+            cast_gradients = tf.cast(gradients > 0, "float32")
+            guided_gradients = cast_conv_outputs * cast_gradients * gradients
 
-        numer = heatmap - np.min(heatmap)
-        denom = (heatmap.max() - heatmap.min()) + eps
-        heatmap = numer / denom
-        heatmap = (heatmap * 255).astype("uint8")
+            convolutional_outputs = convolutional_outputs[0]
+            guided_gradients = guided_gradients[0]
 
-        return heatmap
+            weights = tf.reduce_mean(guided_gradients, axis=(0, 1))
+            cam = tf.reduce_sum(tf.multiply(weights, convolutional_outputs), axis=-1)
 
-    def overlay_heatmap(self, heatmap, image, alpha=0.5):
+            width, height = self.image.shape[2], self.image.shape[1]
+            heatmap = cv2.resize(cam.numpy(), (width, height))
 
-        heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
-        output = cv2.addWeighted(image, alpha, heatmap, 1-alpha, 0)
+            numer = heatmap - np.min(heatmap)
+            denom = (heatmap.max() - heatmap.min()) + eps
+            heatmap = numer / denom
+            heatmap = (heatmap * 255).astype("uint8")
 
-        return heatmap, output
+
+            heatmap = cv2.resize(heatmap, (self.original_image.shape[1], self.original_image.shape[0]))
+            heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
+            output = cv2.addWeighted(self.original_image, alpha, heatmap, 1 - alpha, 0)
+
+            display_output = np.vstack([self.original_image, heatmap, output])
+            display_output = imutils.resize(display_output, height=700)
+            cv2.imshow("output", display_output)
+            cv2.waitKey(0)
+
+        else:
+            raise ValueError("The image used for generating the heatmap has not been preprocessed")
+
 
 
 
