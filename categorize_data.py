@@ -16,10 +16,10 @@ https://github.com/lindawangg/COVID-Net/blob/master/docs/COVIDx.md
 train_dataset = {'normal': [], 'pneumonia': [], 'COVID-19': []}
 test_dataset = {'normal': [], 'pneumonia': [], 'COVID-19': []}
 
-with open('data/train_split_v3.txt') as f:
+with open('data/train_COVIDx3.txt') as f:
     trainfiles = f.readlines()
 
-with open('data/test_split_v3.txt') as fr:
+with open('data/test_COVIDx3.txt') as fr:
     testfiles = fr.readlines()
 
 
@@ -41,8 +41,8 @@ for item in testfiles:
             test_dataset[sub_item].append(item.split()[index-1])
 
 path = 'data'
-train_dir = os.path.join(path, 'train')
-test_dir = os.path.join(path, 'test')
+train_dir = os.path.join(path, 'train/')
+test_dir = os.path.join(path, 'test/')
 
 image_labels = 'normal', 'pneumonia', 'COVID-19'
 
@@ -85,14 +85,3 @@ for folder in os.listdir(current_path):
 
         elif file in current_dataset['COVID-19']:
             shutil.move(os.path.join(current_path, file), os.path.join(current_path, 'COVID-19', file))
-
-
-
-
-
-
-
-
-
-
-
