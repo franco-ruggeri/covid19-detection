@@ -10,8 +10,10 @@ class PEPX(Layer):
      from chest radiography images - Linda Wang, Zhong Qiu Lin and Alexander Wong.
     """
 
-    def __init__(self, channels_in, channels_out):
-        super(PEPX, self).__init__()
+    def __init__(self, channels_in, channels_out, **kwargs):
+        super(PEPX, self).__init__(kwargs)
+        self.channels_in = channels_in
+        self.channels_out = channels_out
 
         nf_p = channels_in // 2             # number of filters for projections 1 and 2
         nf_e = int(3 / 4 * channels_in)     # number of filters for expansion
@@ -32,6 +34,11 @@ class PEPX(Layer):
         x = self.x(x)
         return x
 
+    def get_config(self):
+        config = super(PEPX, self).get_config()
+        config.update({'channels_in': self.channels_in, 'channels_out': self.channels_out})
+        return config
+
 
 class COVIDNetLayer(Layer):
     """
@@ -40,31 +47,35 @@ class COVIDNetLayer(Layer):
     architecture.
     """
 
-    def __init__(self, channels_in, channels_out, n_pepx_layers):
-        super(COVIDNetLayer, self).__init__()
+    def __init__(self, channels_in, channels_out, n_pepx_layers, **kwargs):
+        super(COVIDNetLayer, self).__init__(kwargs)
         self.channels_in = channels_in
         self.channels_out = channels_out
         self.n_pepx_layers = n_pepx_layers
+
         self.pepx = [PEPX(channels_in, channels_out)]
-        for n in range(1, n_pepx_layers):
+        for n in range(1, n_pepx_layers):                                           # PEPX layers
             self.pepx.append(PEPX(channels_out, channels_out))
-        self.conv = Conv2D(kernel_size=1, filters=channels_out, activation='relu')
-        self.pool = MaxPool2D(pool_size=2)
+        self.conv = Conv2D(kernel_size=1, filters=channels_out, activation='relu')  # parallel convolutional layer
+        self.pool = MaxPool2D(pool_size=2)                                          # final pooling layer
 
     def call(self, inputs, **kwargs):
-        residual = self.conv(inputs) + self.pepx[0](inputs)
+        # the first PEPX layer and the parallel convolutional layer take as inputs the inputs
+        x = self.conv(inputs) + self.pepx[0](inputs)
+
+        # the following layers take also skip connections from past layers and parallel convolutional layer
         for n in range(1, self.n_pepx_layers):
-            residual += self.pepx[n](residual)
-        x = self.pool(residual)
-        return x
+            x += self.pepx[n](x)
+
+        # the next layer will take as input all the skip connections from this structure, so we define a single output
+        # that sum the outputs of each layer... this output is x
+        # the output is pooled to halve the spatial dimensionality
+        return self.pool(x)
 
     def get_config(self):
-        config = super(COVIDNetLayer, self).get_config().copy()
-        config.update({
-            'channels_in': self.channels_in,
-            'channels_out': self.channels_out,
-            'n_pepx_layers': self.n_pepx_layers
-        })
+        config = super(COVIDNetLayer, self).get_config()
+        config.update({'channels_in': self.channels_in, 'channels_out': self.channels_out,
+                       'n_pepx_layers': self.n_pepx_layers})
         return config
 
 
@@ -77,8 +88,10 @@ class COVIDNet(Model):
     Inspiration from: https://github.com/IliasPap/COVIDNet
     """
 
-    def __init__(self, input_shape, n_classes):
-        super(COVIDNet, self).__init__()
+    def __init__(self, input_shape, n_classes, **kwargs):
+        super(COVIDNet, self).__init__(kwargs)
+        self.input_shape_ = input_shape     # do not use the name 'input_shape' because it is a read-only property
+        self.n_classes = n_classes
 
         self.pad = ZeroPadding2D(padding=(3, 3))
         self.conv0 = Conv2D(kernel_size=7, filters=64, activation='relu')
@@ -97,9 +110,8 @@ class COVIDNet(Model):
         self.classifier = Dense(n_classes)
 
         # for model.summary()
-        self.inputs = Input(input_shape)
+        self.inputs = Input(self.input_shape_)
         self.outputs = self.call(self.inputs)
-        self._is_graph_network = True
         self._init_graph_network(inputs=self.inputs, outputs=self.outputs)
 
     def call(self, x, **kwargs):
@@ -113,3 +125,16 @@ class COVIDNet(Model):
         x = self.fc2(x)
         x = self.classifier(x)
         return x
+
+    def get_config(self):
+        config = super(COVIDNet, self).get_config()
+        config.update({'input_shape_': self.input_shape_, 'n_classes': self.n_classes})
+        return config
+
+    @classmethod
+    def from_config(cls, config, custom_object=None):
+        input_shape_ = config['input_shape_']
+        n_classes = config['n_classes']
+        del config['input_shape_']
+        del config['n_classes']
+        return cls(input_shape_, n_classes, **config)

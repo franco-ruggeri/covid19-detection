@@ -128,7 +128,6 @@ n_classes = train_data_gen.num_classes
 
 if os.path.isfile(model_path):
     if model_name == 'covid_net':
-        # TODO: it doesn't work
         model = load_model(model_path, custom_objects={'PEPX': PEPX, 'COVIDNetLayer': COVIDNetLayer,
                                                        'COVIDNet': COVIDNet})
     else:
@@ -137,6 +136,7 @@ if os.path.isfile(model_path):
 else:
     if model_name == 'covid_net':
         model = COVIDNet(input_shape=(img_height, img_width, img_channels), n_classes=n_classes)
+        model.build(input_shape=(None, img_height, img_width, img_channels))
     elif model_name == 'res_net_50':
         model = Sequential(name=model_name)
         model.add(ResNet50(include_top=False, pooling='avg', weights='imagenet',
@@ -158,7 +158,7 @@ print('====================')
 print('Model training')
 print('====================')
 
-model_logs_dir = os.path.join(logs_dir, model.name)
+model_logs_dir = os.path.join(logs_dir, model_name)
 try:
     os.mkdir(model_logs_dir)
 except FileExistsError:
@@ -176,10 +176,11 @@ if not trained:
     learning_rate = 2e-5
     epochs = 2
 
-    lr_decay = ReduceLROnPlateau(monitor='loss', factor=factor, patience=patience)
-    checkpoint = ModelCheckpoint(filepath=model_path)
-    tensorboard = TensorBoard(log_dir=model_logs_dir)
-    callbacks = [lr_decay, checkpoint, tensorboard]
+    callbacks = [
+        ReduceLROnPlateau(monitor='loss', factor=factor, patience=patience),
+        ModelCheckpoint(filepath=model_path),
+        TensorBoard(log_dir=model_logs_dir)
+    ]
 
     history = model.fit(train_data_gen, epochs=epochs, callbacks=callbacks, steps_per_epoch=total_train//batch_size)
 
@@ -190,12 +191,10 @@ if not trained:
     plt.figure()
     plt.subplot(1, 2, 1)
     plt.plot(epochs_range, acc)
-    plt.legend()
     plt.title('Training accuracy')
 
     plt.subplot(1, 2, 2)
     plt.plot(epochs_range, loss)
-    plt.legend()
     plt.title('Training loss')
     plt.show()
 
@@ -209,7 +208,7 @@ print('====================')
 print('Model evaluation')
 print('====================')
 
-test_loss, test_acc = model.evaluate(test_data_gen, verbose=2)
+test_loss, test_acc = model.evaluate(test_data_gen, steps=total_test//batch_size)
 
 print('Test loss:', test_loss)
 print('Test accuracy:', test_acc)
