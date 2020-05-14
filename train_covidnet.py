@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from covidnet import COVIDNet
+from covidnet import COVIDNet, COVIDNetLayer, PEPX
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense
@@ -94,17 +94,17 @@ print('====================')
 print('Data preparation')
 print('====================')
 
-batch_size = 50
+batch_size = 8
 img_height = 224
 img_width = 224
 img_channels = 3
 
-train_image_generator = ImageDataGenerator(rescale=1/255, validation_split=.9)
-validation_image_generator = ImageDataGenerator(rescale=1/255)
+train_image_generator = ImageDataGenerator(rescale=1/255)
+test_image_generator = ImageDataGenerator(rescale=1/255)
 train_data_gen = train_image_generator.flow_from_directory(batch_size=batch_size, directory=train_dir, shuffle=True,
-                                                           target_size=(img_height, img_width), subset='training')
-test_data_gen = validation_image_generator.flow_from_directory(batch_size=batch_size, directory=test_dir,
-                                                               target_size=(img_height, img_width))
+                                                           target_size=(img_height, img_width))
+test_data_gen = test_image_generator.flow_from_directory(batch_size=batch_size, directory=test_dir,
+                                                         target_size=(img_height, img_width))
 
 sample_training_images, label = next(train_data_gen)
 plot_images(sample_training_images)
@@ -127,12 +127,16 @@ model_path = os.path.join(models_dir, model_name + '.h5')
 n_classes = train_data_gen.num_classes
 
 if os.path.isfile(model_path):
-    model = load_model(model_path)
+    if model_name == 'covid_net':
+        # TODO: it doesn't work
+        model = load_model(model_path, custom_objects={'PEPX': PEPX, 'COVIDNetLayer': COVIDNetLayer,
+                                                       'COVIDNet': COVIDNet})
+    else:
+        model = load_model(model_path)
     trained = True
 else:
     if model_name == 'covid_net':
         model = COVIDNet(input_shape=(img_height, img_width, img_channels), n_classes=n_classes)
-        model.build()
     elif model_name == 'res_net_50':
         model = Sequential(name=model_name)
         model.add(ResNet50(include_top=False, pooling='avg', weights='imagenet',
@@ -143,7 +147,6 @@ else:
         raise ValueError('Invalid model name. Supported models: covid_net, res_net_50.')
     trained = False
 model.summary()
-exit()
 
 
 ##################
@@ -174,26 +177,26 @@ if not trained:
     epochs = 2
 
     lr_decay = ReduceLROnPlateau(monitor='loss', factor=factor, patience=patience)
-    checkpoint = ModelCheckpoint(model_path)
+    checkpoint = ModelCheckpoint(filepath=model_path)
     tensorboard = TensorBoard(log_dir=model_logs_dir)
     callbacks = [lr_decay, checkpoint, tensorboard]
 
-    history = model.fit(train_data_gen, epochs=epochs, callbacks=callbacks)
+    history = model.fit(train_data_gen, epochs=epochs, callbacks=callbacks, steps_per_epoch=total_train//batch_size)
 
-    acc = history.history['acc']
+    acc = history.history['accuracy']
     loss = history.history['loss']
     epochs_range = range(epochs)
 
     plt.figure()
     plt.subplot(1, 2, 1)
-    plt.plot(epochs_range, acc, label='training accuracy')
+    plt.plot(epochs_range, acc)
     plt.legend()
-    plt.title('Training Accuracy')
+    plt.title('Training accuracy')
 
     plt.subplot(1, 2, 2)
-    plt.plot(epochs_range, loss, label='training loss')
+    plt.plot(epochs_range, loss)
     plt.legend()
-    plt.title()
+    plt.title('Training loss')
     plt.show()
 
 

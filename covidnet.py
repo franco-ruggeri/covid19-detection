@@ -23,7 +23,7 @@ class PEPX(Layer):
         self.p2 = Conv2D(kernel_size=1, filters=nf_p, activation='relu')            # projection 2
         self.x = Conv2D(kernel_size=1, filters=channels_out, activation='relu')     # extension
 
-    def call(self, inputs):
+    def call(self, inputs, **kwargs):
         x = self.p1(inputs)
         x = self.e(x)
         x = self.pad(x)
@@ -40,20 +40,32 @@ class COVIDNetLayer(Layer):
     architecture.
     """
 
-    def __init__(self, channels_in, channels_out, n_pepx):
+    def __init__(self, channels_in, channels_out, n_pepx_layers):
         super(COVIDNetLayer, self).__init__()
-        self.pepx = []
-        for n in range(n_pepx):
-            self.pepx.append(PEPX(channels_in, channels_out))
+        self.channels_in = channels_in
+        self.channels_out = channels_out
+        self.n_pepx_layers = n_pepx_layers
+        self.pepx = [PEPX(channels_in, channels_out)]
+        for n in range(1, n_pepx_layers):
+            self.pepx.append(PEPX(channels_out, channels_out))
         self.conv = Conv2D(kernel_size=1, filters=channels_out, activation='relu')
         self.pool = MaxPool2D(pool_size=2)
 
-    def call(self, inputs):
+    def call(self, inputs, **kwargs):
         residual = self.conv(inputs) + self.pepx[0](inputs)
-        for n in range(1, len(self.pepx)):
+        for n in range(1, self.n_pepx_layers):
             residual += self.pepx[n](residual)
         x = self.pool(residual)
         return x
+
+    def get_config(self):
+        config = super(COVIDNetLayer, self).get_config().copy()
+        config.update({
+            'channels_in': self.channels_in,
+            'channels_out': self.channels_out,
+            'n_pepx_layers': self.n_pepx_layers
+        })
+        return config
 
 
 class COVIDNet(Model):
@@ -84,11 +96,13 @@ class COVIDNet(Model):
         self.fc2 = Dense(256, activation='relu')
         self.classifier = Dense(n_classes)
 
-        # for summary
+        # for model.summary()
         self.inputs = Input(input_shape)
         self.outputs = self.call(self.inputs)
+        self._is_graph_network = True
+        self._init_graph_network(inputs=self.inputs, outputs=self.outputs)
 
-    def call(self, x):
+    def call(self, x, **kwargs):
         x = self.pad(x)
         x = self.conv0(x)
         x = self.pool0(x)
@@ -99,7 +113,3 @@ class COVIDNet(Model):
         x = self.fc2(x)
         x = self.classifier(x)
         return x
-
-    def build(self):
-        self._is_graph_network = True
-        self._init_graph_network(inputs=self.inputs, outputs=self.outputs)
