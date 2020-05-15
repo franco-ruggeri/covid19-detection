@@ -165,11 +165,13 @@ print('====================')
 model_path = os.path.join(models_dir, model_name + '.h5')
 
 if os.path.isfile(model_path):      # existing file -> load model
-    if model_name == 'covidnet':
+    if 'covidnet' in model_name:
         model = load_model(model_path, custom_objects={'PEPX': PEPX, 'COVIDNetLayer': COVIDNetLayer,
                                                        'COVIDNet': COVIDNet})
-    else:
+    elif 'resnet50' in model_name:
         model = load_model(model_path)
+    else:
+        raise ValueError('Invalid model name. Supported models: covidnet, resnet50.')
     loaded = True
 else:                               # otherwise create model
     if 'covidnet' in model_name:
