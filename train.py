@@ -40,6 +40,8 @@ parser.add_argument('--no-data_augmentation', action='store_true', help='Do not 
 parser.add_argument('--no-finetuning', action='store_true', help='Do not fine tune')
 parser.add_argument('--no-pretraining', action='store_true', help='Do not fine tune')
 parser.add_argument('--no-rebalancing', action='store_true', help='Do not rebalance batches')
+parser.add_argument('--continue_fit', action='store_true',
+                    help='If the model is loaded, it is trained for other epochs')
 
 args = parser.parse_args()
 
@@ -60,6 +62,7 @@ finetuning = not args.no_finetuning
 pretraining = not args.no_pretraining
 data_augmentation = not args.no_data_augmentation
 rebalancing = not args.no_rebalancing
+continue_fit = args.continue_fit
 
 # build model name so that files are not overwritten for different experiments
 model_name = args.model
@@ -205,7 +208,7 @@ print('====================')
 print('Model training')
 print('====================')
 
-if not loaded:
+if not loaded or continue_fit:
     optimizer = 'adam'
     loss = CategoricalCrossentropy(from_logits=True)
     metrics = ['accuracy']
@@ -240,7 +243,8 @@ if not loaded:
     plt.savefig(os.path.join(results_dir, model_name + '_loss.png'))
     plt.show()
 else:
-    print('Model loaded and assumed to be already trained')
+    print('Model loaded... no training is going to be done')
+    print('Use the option --continue_fit if you want to continue fitting')
 
 
 #################
