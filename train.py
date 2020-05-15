@@ -3,6 +3,7 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 from covidnet import COVIDNet, COVIDNetLayer, PEPX
+from data import balanced_flow_from_directory, plot_images
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense
@@ -83,7 +84,7 @@ train_dir = os.path.join(data_dir, 'train')
 train_dirs = [os.path.join(data_dir, 'train', x) for x in os.listdir(train_dir)]
 test_dir = os.path.join(data_dir, 'test')
 test_dirs = [os.path.join(data_dir, 'test', x) for x in os.listdir(test_dir)]
-target_names = [x for x in os.listdir(train_dir)]
+class_names = [x for x in os.listdir(train_dir)]
 
 num_train = [len(os.listdir(x)) for x in train_dirs]
 num_test = [len(os.listdir(x)) for x in test_dirs]
@@ -91,12 +92,13 @@ tot_train = sum(num_train)
 tot_test = sum(num_test)
 
 plt.figure()
-x = np.arange(len(target_names))
-plt.bar(x, num_train, width=.25, tick_label=target_names, label='train')
-plt.bar(x+.25, num_test, width=.25, tick_label=target_names, label='test')
+x = np.arange(len(class_names))
+plt.bar(x, num_train, width=.25, tick_label=class_names, label='train')
+plt.bar(x + .25, num_test, width=.25, tick_label=class_names, label='test')
 plt.ylabel('Number of images ($log_{10}$)')
 plt.yscale('log')
 plt.legend()
+plt.savefig(os.path.join(results_dir, 'dataset.png'))
 plt.show()
 
 
@@ -104,35 +106,32 @@ plt.show()
 # 2. Build input pipeline #
 ###########################
 
-def plot_images(images_arr):
-    fig, axes = plt.subplots(2, 4)
-    axes = axes.flatten()
-    for img, ax in zip(images_arr, axes):
-        ax.imshow(img)
-        ax.axis('off')
-    plt.tight_layout()
-    plt.show()
-
-
 print()
 print('====================')
 print('Data preparation')
 print('====================')
 
+# test generator
+test_image_generator = ImageDataGenerator(rescale=1 / 255)
+test_data_gen = test_image_generator.flow_from_directory(batch_size=batch_size, directory=test_dir,
+                                                         target_size=(img_height, img_width))
+class_names = sorted(test_data_gen.class_indices, key=test_data_gen.class_indices.get)
+n_classes = test_data_gen.num_classes
+
+# train generator
 if augmentation:
     train_image_generator = ImageDataGenerator(rescale=1/255, width_shift_range=.15, height_shift_range=.15,
                                                rotation_range=45, horizontal_flip=True, zoom_range=.2,
                                                brightness_range=(.5, 1.5))
 else:
     train_image_generator = ImageDataGenerator(rescale=1 / 255)
-test_image_generator = ImageDataGenerator(rescale=1/255)
-train_data_gen = train_image_generator.flow_from_directory(batch_size=batch_size, directory=train_dir, shuffle=True,
-                                                           target_size=(img_height, img_width))
-test_data_gen = test_image_generator.flow_from_directory(batch_size=batch_size, directory=test_dir,
-                                                         target_size=(img_height, img_width))
+train_data_gen = balanced_flow_from_directory(image_generator=train_image_generator, batch_size=batch_size,
+                                              class_names=class_names, directory=train_dir, shuffle=True,
+                                              target_size=(img_height, img_width))
 
-sample_training_images, label = next(train_data_gen)
-plot_images(sample_training_images)
+# plot one batch (for debugging)
+images, labels = next(train_data_gen)
+plot_images(images)
 
 
 ##################
@@ -145,16 +144,15 @@ print('Model architecture')
 print('====================')
 
 model_path = os.path.join(models_dir, model_name + '.h5')
-n_classes = train_data_gen.num_classes
 
-if os.path.isfile(model_path):
+if os.path.isfile(model_path):      # existing file -> load model
     if model_name == 'covidnet':
         model = load_model(model_path, custom_objects={'PEPX': PEPX, 'COVIDNetLayer': COVIDNetLayer,
                                                        'COVIDNet': COVIDNet})
     else:
         model = load_model(model_path)
     loaded = True
-else:
+else:                               # otherwise create model
     if model_name == 'covidnet':
         model = COVIDNet(input_shape=(img_height, img_width, img_channels), n_classes=n_classes)
     elif model_name == 'resnet50':
@@ -227,23 +225,23 @@ print('====================')
 
 probabilities = model.predict(test_data_gen, steps=tot_test // batch_size + 1)
 predictions = np.argmax(probabilities, axis=1)
-target_names = sorted(test_data_gen.class_indices, key=test_data_gen.class_indices.get)
 
 # confusion matrix
 cm = confusion_matrix(test_data_gen.classes, predictions)
 ticks = np.arange(n_classes)
 plt.figure()
 plt.imshow(cm, cmap='Blues')
-plt.xticks(ticks, target_names)
-plt.yticks(ticks, target_names, rotation='vertical')
+plt.xticks(ticks, class_names)
+plt.yticks(ticks, class_names, rotation='vertical')
 plt.tick_params(axis='both', length=0, labelsize=10)
 for i in range(n_classes):
     for j in range(n_classes):
         plt.text(j, i, cm[i, j], fontsize=10, ha='center', va='center')
 plt.savefig(os.path.join(results_dir, model_name + '_confusion_matrix.png'))
+plt.show()
 
 # precision, recall, f1-score, accuracy, etc.
-cr = classification_report(test_data_gen.classes, predictions, target_names=target_names)
+cr = classification_report(test_data_gen.classes, predictions, target_names=class_names)
 print('Classification report')
 print(cr)
 with open(os.path.join(results_dir, model_name + '_report.txt'), mode='w') as f:
