@@ -76,7 +76,7 @@ print('====================')
 print('Settings:')
 for k, v in vars(args).items():
     print('\t{} = {}'.format(k, v))
-print()
+print('--------------------')
 
 for d in [data_dir, models_dir, logs_dir, results_dir]:
     try:
@@ -105,6 +105,14 @@ num_train = [len(os.listdir(x)) for x in train_dirs]
 num_test = [len(os.listdir(x)) for x in test_dirs]
 tot_train = sum(num_train)
 tot_test = sum(num_test)
+
+for k, n_train in zip(class_names, num_train):
+    print('Training {} images: {}'.format(k, n_train))
+for k, n_test in zip(class_names, num_test):
+    print('Test {} images: {}'.format(k, n_test))
+print('--------------------')
+print('Total training images:', tot_train)
+print('Total test images:', tot_test)
 
 plt.figure()
 x = np.arange(len(class_names))
