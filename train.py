@@ -23,10 +23,10 @@ from sklearn.metrics import classification_report, confusion_matrix
 parser = argparse.ArgumentParser()
 parser.add_argument('model', type=str, help='Architecture to use (covidnet or resnet50)')
 parser.add_argument('--data', default='data', type=str, help='Path where to load data from')
+parser.add_argument('--pretraining_data', default='data_imagenet', type=str, help='Path where to load data for pre-training from')
 parser.add_argument('--models', default='models', type=str, help='Path where to save models')
 parser.add_argument('--logs', default='logs', type=str, help='Path where to save logs for TensorBoard')
 parser.add_argument('--results', default='results', type=str, help='Path where to save evaluation results')
-parser.add_argument('--no-data_augmentation', action='store_true', help='Not to use data augmentation')
 parser.add_argument('--batch_size', default=8, type=int, help='Batch size')
 parser.add_argument('--img_height', default=224, type=int, help='Height of input images')
 parser.add_argument('--img_width', default=224, type=int, help='Width of input images')
@@ -35,15 +35,19 @@ parser.add_argument('--factor', default=0.7, type=float, help='Factor to reduce 
 parser.add_argument('--patience', default=5, type=int, help='Patience (number of epochs to wait before reducing LR)')
 parser.add_argument('--learning_rate', default=2e-5, type=float, help='Learning rate (LR)')
 parser.add_argument('--epochs', default=22, type=int, help='Number of epochs')
+parser.add_argument('--no-data_augmentation', action='store_true', help='Do not use data augmentation')
+parser.add_argument('--no-finetuning', action='store_true', help='Do not fine tune')
+parser.add_argument('--no-pretraining', action='store_true', help='Do not fine tune')
+parser.add_argument('--no-rebalancing', action='store_true', help='Do not rebalance batches')
 
 args = parser.parse_args()
 
 data_dir = args.data
+data_pretrain_dir = args.pretraining_data
 models_dir = args.models
 logs_dir = args.logs
 results_dir = args.results
 model_name = args.model
-data_augmentation = not args.no_data_augmentation
 batch_size = args.batch_size
 img_height = args.img_height
 img_width = args.img_width
@@ -53,6 +57,10 @@ patience = args.patience
 learning_rate = args.learning_rate
 epochs = args.epochs
 model_logs_dir = os.path.join(logs_dir, model_name)
+data_augmentation = not args.no_data_augmentation
+finetuning = not args.no_finetuning
+pretraining = not args.no_pretraining
+rebalancing = not args.no_rebalancing
 
 print('====================')
 print('Environment preparation')
@@ -125,9 +133,13 @@ if data_augmentation:
                                                brightness_range=(.5, 1.5))
 else:
     train_image_generator = ImageDataGenerator(rescale=1 / 255)
-train_data_gen = balanced_flow_from_directory(image_generator=train_image_generator, batch_size=batch_size,
-                                              class_names=class_names, directory=train_dir, shuffle=True,
-                                              target_size=(img_height, img_width))
+if rebalancing:
+    train_data_gen = balanced_flow_from_directory(image_generator=train_image_generator, batch_size=batch_size,
+                                                  class_names=class_names, directory=train_dir, shuffle=True,
+                                                  target_size=(img_height, img_width))
+else:
+    train_data_gen = train_image_generator.flow_from_directory(batch_size=batch_size, directory=train_dir, shuffle=True,
+                                                               target_size=(img_height, img_width))
 
 # plot one batch (for debugging)
 images, labels = next(train_data_gen)
