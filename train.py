@@ -26,7 +26,7 @@ parser.add_argument('--data', default='data', type=str, help='Path where to load
 parser.add_argument('--models', default='models', type=str, help='Path where to save models')
 parser.add_argument('--logs', default='logs', type=str, help='Path where to save logs for TensorBoard')
 parser.add_argument('--results', default='results', type=str, help='Path where to save evaluation results')
-parser.add_argument('--augmentation', default=True, type=bool, help='Data augmentation')
+parser.add_argument('--no-data_augmentation', action='store_true', help='Not to use data augmentation')
 parser.add_argument('--batch_size', default=8, type=int, help='Batch size')
 parser.add_argument('--img_height', default=224, type=int, help='Height of input images')
 parser.add_argument('--img_width', default=224, type=int, help='Width of input images')
@@ -43,7 +43,7 @@ models_dir = args.models
 logs_dir = args.logs
 results_dir = args.results
 model_name = args.model
-augmentation = args.augmentation
+data_augmentation = not args.no_data_augmentation
 batch_size = args.batch_size
 img_height = args.img_height
 img_width = args.img_width
@@ -119,9 +119,9 @@ class_names = sorted(test_data_gen.class_indices, key=test_data_gen.class_indice
 n_classes = test_data_gen.num_classes
 
 # train generator
-if augmentation:
+if data_augmentation:
     train_image_generator = ImageDataGenerator(rescale=1/255, width_shift_range=.15, height_shift_range=.15,
-                                               rotation_range=45, horizontal_flip=True, zoom_range=.2,
+                                               rotation_range=30, horizontal_flip=True, zoom_range=.2,
                                                brightness_range=(.5, 1.5))
 else:
     train_image_generator = ImageDataGenerator(rescale=1 / 255)
