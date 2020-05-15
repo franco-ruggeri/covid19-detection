@@ -121,8 +121,8 @@ print('====================')
 
 if augmentation:
     train_image_generator = ImageDataGenerator(rescale=1/255, width_shift_range=.15, height_shift_range=.15,
-                                               rotation_range=45, horizontal_flip=True, zoom_range=.5,
-                                               brightness_range=.15)
+                                               rotation_range=45, horizontal_flip=True, zoom_range=.2,
+                                               brightness_range=(.5, 1.5))
 else:
     train_image_generator = ImageDataGenerator(rescale=1 / 255)
 test_image_generator = ImageDataGenerator(rescale=1/255)
