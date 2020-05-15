@@ -23,7 +23,8 @@ from sklearn.metrics import classification_report, confusion_matrix
 parser = argparse.ArgumentParser()
 parser.add_argument('model', type=str, help='Architecture to use (covidnet or resnet50)')
 parser.add_argument('--data', default='data', type=str, help='Path where to load data from')
-parser.add_argument('--pretraining_data', default='data_imagenet', type=str, help='Path where to load data for pre-training from')
+parser.add_argument('--pretraining_data', default='data_imagenet', type=str,
+                    help='Path where to load data for pre-training from')
 parser.add_argument('--models', default='models', type=str, help='Path where to save models')
 parser.add_argument('--logs', default='logs', type=str, help='Path where to save logs for TensorBoard')
 parser.add_argument('--results', default='results', type=str, help='Path where to save evaluation results')
@@ -252,6 +253,8 @@ plt.imshow(cm, cmap='Blues')
 plt.xticks(ticks, class_names)
 plt.yticks(ticks, class_names, rotation='vertical')
 plt.tick_params(axis='both', length=0, labelsize=10)
+plt.xlabel('predictions')
+plt.ylabel('ground truth')
 for i in range(n_classes):
     for j in range(n_classes):
         plt.text(j, i, cm[i, j], fontsize=10, ha='center', va='center')

@@ -4,7 +4,7 @@ import numpy as np
 import imutils
 import cv2
 
-image_path = 'images/dog.jpg'
+image_path = 'data/train/COVID-19/1.CXRCTThoraximagesofCOVID-19fromSingapore.pdf-000-fig1a.png'
 model = tf.keras.applications.ResNet50(weights='imagenet')
 
 original = cv2.imread(image_path)

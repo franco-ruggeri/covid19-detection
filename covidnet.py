@@ -68,7 +68,7 @@ class COVIDNetLayer(Layer):
             x += self.pepx[n](x)
 
         # the next layer will take as input all the skip connections from this structure, so we define a single output
-        # that sum the outputs of each layer... this output is x
+        # that sums the outputs of each layer... this output is x
         # the output is pooled to halve the spatial dimensionality
         return self.pool(x)
 
