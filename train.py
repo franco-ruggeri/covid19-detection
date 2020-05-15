@@ -47,7 +47,6 @@ data_pretrain_dir = args.pretraining_data
 models_dir = args.models
 logs_dir = args.logs
 results_dir = args.results
-model_name = args.model
 batch_size = args.batch_size
 img_height = args.img_height
 img_width = args.img_width
@@ -56,11 +55,18 @@ factor = args.factor
 patience = args.patience
 learning_rate = args.learning_rate
 epochs = args.epochs
-model_logs_dir = os.path.join(logs_dir, model_name)
-data_augmentation = not args.no_data_augmentation
 finetuning = not args.no_finetuning
 pretraining = not args.no_pretraining
+data_augmentation = not args.no_data_augmentation
 rebalancing = not args.no_rebalancing
+
+# build model name so that files are not overwritten for different experiments
+model_name = args.model
+model_name += '_finetuning' if finetuning else '_no-finetuning'
+model_name += ('_pretraining_' + data_pretrain_dir.replace('data_', '')) if pretraining else '_no-pretraining'
+model_name += '_augmentation' if data_augmentation else '_no-augmentation'
+model_name += '_rebalancing' if rebalancing else '_no-rebalancing'
+model_logs_dir = os.path.join(logs_dir, model_name)
 
 print('====================')
 print('Environment preparation')
@@ -165,9 +171,9 @@ if os.path.isfile(model_path):      # existing file -> load model
         model = load_model(model_path)
     loaded = True
 else:                               # otherwise create model
-    if model_name == 'covidnet':
+    if 'covidnet' in model_name:
         model = COVIDNet(input_shape=(img_height, img_width, img_channels), n_classes=n_classes)
-    elif model_name == 'resnet50':
+    elif 'resnet50' in model_name:
         model = Sequential(name=model_name)
         model.add(ResNet50(include_top=False, pooling='avg', weights='imagenet',
                            input_shape=(img_height, img_width, img_channels)))
