@@ -5,12 +5,10 @@ import imutils
 from tensorflow.keras.models import Model
 
 
-
 class GradCAM:
-
     """Implementation of Grad-CAM using tensorflow and keras"""
 
-    def __init__(self, model, image_path, class_index=None, layer_name=None):
+    def __init__(self, model, image_path, class_index=None, layer_name=None, composed_model=False):
 
         """
 
@@ -20,7 +18,7 @@ class GradCAM:
         :param layer_name: Name of the last convolutional layer
 
         """
-
+        self.composed_model = composed_model
         self.model = model
         self.original_image = cv2.imread(image_path)
         self.image = None
@@ -30,7 +28,6 @@ class GradCAM:
 
         # if layer name is not known, try to find the last convolutional layer of the model:
         if layer_name is None:
-
             self.layer_name = self.find_layer()
 
         if class_index is None:
@@ -67,11 +64,22 @@ class GradCAM:
         # iterate over the layers in reversed order, when a four dimensional output is encountered this is assumed to be
         # the convolutional layer
 
-        for layer in reversed(self.model.layers):
+        if self.composed_model:
 
-            output_shape = layer.output.shape
-            if len(output_shape) == 4:
-                return layer.name
+            for layer in reversed(self.model.layers):
+                if layer.name == 'resnet50':
+
+                    for model_layer in reversed(layer.layers):
+
+                        output_shape = model_layer.output.shape
+                        if len(output_shape) == 4:
+                            return model_layer.name
+        else:
+
+            for idx in reversed(range(len(self.model.layers))):
+                output_shape = self.model.layers[idx].output.shape
+                if len(output_shape) == 4:
+                    return idx
 
         raise ValueError("Could not find a matching convolutional layer, its output shape should be 4 dimensional")
 
@@ -87,6 +95,7 @@ class GradCAM:
         """
 
         predictions = self.model.predict(image)
+        print(predictions)
         class_index = np.argmax(predictions[0])
         return class_index
 
@@ -96,16 +105,26 @@ class GradCAM:
 
         if self.is_image_preprocessed:
 
-            grad_model = tf.keras.models.Model(inputs=[self.model.inputs],
-                                               outputs=[self.model.get_layer(self.layer_name).output,
-                                               self.model.output])
+            if self.composed_model:
+
+                inputs = [self.model.get_layer('resnet50').inputs]
+                outputs = [self.model.get_layer('resnet50').get_layer(self.layer_name).output,
+                           self.model.get_layer('resnet50').output]
+
+            else:
+
+                inputs = [self.model.inputs]
+                outputs = [self.model.get_layer(self.layer_name).output, self.model.output]
+
+            grad_model = tf.keras.models.Model(inputs=inputs,
+                                               outputs=outputs)
 
             with tf.GradientTape() as tape:
                 inputs = tf.cast(self.image, tf.float32)
                 convolutional_outputs, predictions = grad_model(inputs)
                 loss = predictions[:, self.class_index]
 
-            #output = convolutional_outputs[0]
+            # output = convolutional_outputs[0]
             gradients = tape.gradient(loss, convolutional_outputs)
 
             cast_conv_outputs = tf.cast(convolutional_outputs > 0, "float32")
@@ -126,7 +145,6 @@ class GradCAM:
             heatmap = numer / denom
             heatmap = (heatmap * 255).astype("uint8")
 
-
             heatmap = cv2.resize(heatmap, (self.original_image.shape[1], self.original_image.shape[0]))
             heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
             output = cv2.addWeighted(self.original_image, alpha, heatmap, 1 - alpha, 0)
@@ -138,8 +156,6 @@ class GradCAM:
 
         else:
             raise ValueError("The image used for generating the heatmap has not been preprocessed")
-
-
 
 
 
