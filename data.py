@@ -11,9 +11,9 @@ def balanced_flow_from_directory(image_generator, batch_size, class_names, direc
 
     # one generator per class
     data_generators = [image_generator.flow_from_directory(batch_size=batch_size_per_class, classes=[k],
-                                                          directory=directory, shuffle=shuffle,
-                                                          target_size=target_size)
-                      for k in class_names]
+                                                           directory=directory, shuffle=shuffle,
+                                                           target_size=target_size)
+                       for k in class_names]
 
     batch_images = np.zeros((batch_size,) + data_generators[0].image_shape)
     batch_classes = np.zeros((batch_size, n_classes))
