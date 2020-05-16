@@ -106,7 +106,7 @@ class COVIDNet(Model):
 
         self.flatten = Flatten()
         self.fc1 = Dense(1024, activation='relu')
-        self.fc2 = Dense(256, activation='relu')
+        self.fc2 = Dense(1024, activation='relu')
         self.classifier = Dense(n_classes)
 
         # for model.summary()

@@ -38,7 +38,7 @@ parser.add_argument('--learning_rate', default=2e-5, type=float, help='Learning 
 parser.add_argument('--epochs', default=22, type=int, help='Number of epochs')
 parser.add_argument('--no-data_augmentation', action='store_true', help='Do not use data augmentation')
 parser.add_argument('--no-finetuning', action='store_true', help='Do not fine tune')
-parser.add_argument('--no-pretraining', action='store_true', help='Do not fine tune')
+parser.add_argument('--no-pretraining', action='store_true', help='Do not pre-train')
 parser.add_argument('--no-rebalancing', action='store_true', help='Do not rebalance batches')
 parser.add_argument('--continue_fit', action='store_true',
                     help='If the model is loaded, it is trained for other epochs')
