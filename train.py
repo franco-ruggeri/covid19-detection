@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from covidnet import COVIDNet, COVIDNetLayer, PEPX
 from data import balanced_flow_from_directory, plot_images
+from gradcam import GradCAM
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense
@@ -137,7 +138,7 @@ if args.no_data_augmentation:
 else:
     train_image_generator = ImageDataGenerator(rescale=1/255, width_shift_range=.15, height_shift_range=.15,
                                                rotation_range=30, horizontal_flip=True, zoom_range=.2,
-                                               brightness_range=(.5, 1.5))
+                                               brightness_range=(.5, 1.2))
 if args.no_rebalancing:
     train_data_gen = train_image_generator.flow_from_directory(batch_size=args.batch_size, directory=train_dir,
                                                                shuffle=True,
@@ -304,3 +305,13 @@ print('Classification report')
 print(cr)
 with open(os.path.join(args.results, model_name + '_report.txt'), mode='w') as f:
     f.write(cr)
+
+# Grad-CAM on some COVID-19 cases
+dir = os.path.join(test_dir, 'COVID-19')
+filenames = os.listdir(dir)
+idx_images = np.arange(len(filenames))
+np.random.shuffle(idx_images)
+idx_images = idx_images[:10]
+for i, idx in enumerate(idx_images):
+    gc = GradCAM(model, os.path.join(dir, filenames[idx]))
+    gc.generate_and_visualize_heatmap(os.path.join(args.results, '{}_grad_cam_{}.png'.format(model_name, i)))
