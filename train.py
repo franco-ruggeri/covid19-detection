@@ -69,6 +69,12 @@ for k, v in vars(args).items():
     print('\t{} = {}'.format(k, v))
 print('--------------------')
 
+answer = ''
+while answer not in ['y', 'n']:
+        answer = input('Double-check the settings. Are you sure you want to continue [y/n]? ').lower()
+if answer == 'n':
+    exit()
+
 for d in [args.data, args.models, args.logs, args.results]:
     try:
         os.mkdir(d)
@@ -218,7 +224,8 @@ if not loaded or args.continue_fit:
         TensorBoard(log_dir=model_logs_dir)
     ]
 
-    history = model.fit(train_data_gen, epochs=args.epochs, callbacks=callbacks, steps_per_epoch=tot_train // args.batch_size,
+    history = model.fit(train_data_gen, epochs=args.epochs, callbacks=callbacks,
+                        steps_per_epoch=tot_train // args.batch_size,
                         validation_data=test_data_gen, validation_steps=tot_test // args.batch_size)
 
     model.save(model_path)
@@ -307,11 +314,11 @@ with open(os.path.join(args.results, model_name + '_report.txt'), mode='w') as f
     f.write(cr)
 
 # Grad-CAM on some COVID-19 cases
-dir = os.path.join(test_dir, 'COVID-19')
-filenames = os.listdir(dir)
+covid_dir = os.path.join(test_dir, 'COVID-19')
+filenames = os.listdir(covid_dir)
 idx_images = np.arange(len(filenames))
 np.random.shuffle(idx_images)
 idx_images = idx_images[:10]
 for i, idx in enumerate(idx_images):
-    gc = GradCAM(model, os.path.join(dir, filenames[idx]))
+    gc = GradCAM(model, os.path.join(covid_dir, filenames[idx]))
     gc.generate_and_visualize_heatmap(os.path.join(args.results, '{}_grad_cam_{}.png'.format(model_name, i)))
