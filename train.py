@@ -39,8 +39,8 @@ parser.add_argument('--learning_rate', default=1e-3, type=float, help='Learning 
 parser.add_argument('--epochs', default=10, type=int, help='Number of epochs')
 parser.add_argument('--continue_fit', action='store_true', help='If the model is loaded, it is trained for other epochs')
 parser.add_argument('--no-data_augmentation', action='store_true', help='Do not use data augmentation')
-parser.add_argument('--no-class_imbalance', action='store_true', help='Do not deal with class imbalance')
-parser.add_argument('--no-pretraining', type=str, help='Do not use weights of pre-training for ResNet-50')
+parser.add_argument('--no-class_imbalance', action='store_true', help='Do not compensate class imbalance')
+parser.add_argument('--no-pretraining', action='store_true', help='Do not use weights of pre-training for ResNet-50')
 parser.add_argument('--retraining', default=1, type=int, help='Number of layers to re-train (only for ResNet-50)')
 parser.add_argument('--finetuning', default=1, type=int, help='Number of layers to fine-tune (only for ResNet-50)')
 parser.add_argument('--epochs_finetuning', default=10, type=int, help='Number of epochs for fine-tuning phase (only for ResNet-50)')
@@ -52,7 +52,7 @@ if args.finetuning < args.retraining:
 # build model name so that files are not overwritten for different experiments
 model_name = args.model
 model_name += '_no-augmentation' if args.no_data_augmentation else ''
-model_name += '_no-imbalance' if args.no_pretraining else ''
+model_name += '_no-imbalance' if args.no_class_imbalance else ''
 model_name += '_no-pretraining' if args.no_pretraining is not None else ''
 model_name += '_no-finetuning' if (not args.no_pretraining and args.finetuning <= 1) else ''
 model_logs_dir = os.path.join(args.logs, model_name)
@@ -153,8 +153,7 @@ train_data_gen = train_image_generator.flow_from_directory(batch_size=args.batch
 images = next(train_data_gen)[0]
 plot_images(images)
 
-print(train_data_gen.class_indices)
-exit()
+
 ##################
 # 3. Build model #
 ##################
@@ -211,10 +210,14 @@ if not loaded or args.continue_fit:
 
     if args.no_class_imbalance:
         class_weight = None
+        print('No compensation for unbalanced dataset')
     else:
-        class_weight = ...
-        weight_for_0 = (1 / neg) * (total) / 2.0
-        weight_for_1 = (1 / pos) * (total) / 2.0
+        print('Weights for class imbalance:')
+        class_weight = np.zeros(n_classes)
+        for k, v in train_data_gen.class_indices.items():
+            nk = len(os.listdir(os.path.join(train_dir, k)))
+            class_weight[v] = tot_train / (n_classes*nk)
+            print(k, class_weight[v])
 
     history = model.fit(train_data_gen, epochs=args.epochs, callbacks=callbacks,
                         steps_per_epoch=tot_train // args.batch_size,
@@ -222,15 +225,15 @@ if not loaded or args.continue_fit:
                         class_weight=class_weight)
 
     model.save(model_path)
-    acc = history.history['accuracy']
-    val_acc = history.history['val_accuracy']
-    loss = history.history['loss']
-    val_loss = history.history['val_loss']
+    acc_h = history.history['accuracy']
+    val_acc_h = history.history['val_accuracy']
+    loss_h = history.history['loss']
+    val_loss_h = history.history['val_loss']
     tot_epochs = args.epochs
-    plt.figure()
 
     # fine-tuning
     if 'resnet50' in model_name and not args.no_pretraining and args.finetuning > 1:
+        print('Starting fine-tuning...')
         optimizer = Adam(learning_rate=args.learning_rate / 10)     # note /10... FINE-tuning!
         model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
 
@@ -238,19 +241,21 @@ if not loaded or args.continue_fit:
         model.trainable = True                                      # unfreeze all
         for layer in model.layers[:-args.finetuning]:
             layer.trainable = False                                 # freeze layers not to be fine-tuned
+        model.summary()
 
         history = model.fit(train_data_gen, epochs=args.epochs, callbacks=callbacks,
                             steps_per_epoch=tot_train // args.batch_size, validation_data=test_data_gen,
-                            validation_steps=tot_test // args.batch_size)
+                            validation_steps=tot_test // args.batch_size, class_weight=class_weight)
 
         model.save(model_path)
-        acc += history.history['accuracy']
-        val_acc += history.history['val_accuracy']
-        loss += history.history['loss']
-        val_loss += history.history['val_loss']
-        tot_epochs += range(args.epochs_finetuning)
+        acc_h += history.history['accuracy']
+        val_acc_h += history.history['val_accuracy']
+        loss_h += history.history['loss']
+        val_loss_h += history.history['val_loss']
+        tot_epochs += args.epochs_finetuning
 
     epochs_range = range(tot_epochs)
+    plt.figure()
     plt.plot(epochs_range, history.history['accuracy'], label='training')
     plt.plot(epochs_range, history.history['val_accuracy'], label='test')
     plt.xlabel('epoch')
