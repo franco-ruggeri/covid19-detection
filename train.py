@@ -20,7 +20,7 @@ from sklearn.metrics import classification_report, confusion_matrix
 # 0. Prepare environment #
 ##########################
 
-# np.random.seed(1)
+np.random.seed(1)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('model', type=str, help='Architecture to use (covidnet or resnet50)')
@@ -142,9 +142,11 @@ n_classes = test_data_gen.num_classes
 if args.no_data_augmentation:
     train_image_generator = ImageDataGenerator(rescale=1 / 255)
 else:
-    train_image_generator = ImageDataGenerator(rescale=1/255, width_shift_range=.15, height_shift_range=.15,
-                                               rotation_range=30, horizontal_flip=True, zoom_range=.2,
-                                               brightness_range=(.5, 1.2))
+    train_image_generator = ImageDataGenerator(rescale=1/255, featurewise_center=False,
+                                               featurewise_std_normalization=False, rotation_range=10,
+                                               width_shift_range=0.1,height_shift_range=0.1,
+                                               horizontal_flip=True, brightness_range=(0.9, 1.1),
+                                               zoom_range=(0.85, 1.15), fill_mode='constant', cval=0.)
 if args.no_rebalancing:
     train_data_gen = train_image_generator.flow_from_directory(batch_size=args.batch_size, directory=train_dir,
                                                                shuffle=True,
@@ -237,7 +239,7 @@ if not loaded or args.continue_fit:
     plt.figure()
 
     # fine-tuning
-    if pretrained:
+    if pretrained and args.finetuning > 1:
         optimizer = Adam(learning_rate=args.learning_rate / 10)     # note /10... FINE-tuning!
         model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
 
