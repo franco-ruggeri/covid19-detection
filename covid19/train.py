@@ -3,16 +3,16 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from covidnet import COVIDNet, COVIDNetLayer, PEPX
-from data import plot_images
-from gradcam import GradCAM
+from covid19.models.covidnet import COVIDNet, COVIDNetLayer, PEPX
+from covid19.datasets.data import plot_images
+from covid19.explainability.gradcam import GradCAM
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.applications import ResNet50
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import CategoricalCrossentropy
-from tensorflow.keras.callbacks import ReduceLROnPlateau, ModelCheckpoint, TensorBoard
+from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard
 from tensorflow.keras.models import load_model
 from sklearn.metrics import classification_report, confusion_matrix
 

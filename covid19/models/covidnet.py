@@ -10,6 +10,8 @@ class PEPX(Layer):
      from chest radiography images - Linda Wang, Zhong Qiu Lin and Alexander Wong.
     """
 
+    # TODO: fix it looking at https://www.tensorflow.org/guide/keras/custom_layers_and_models
+
     def __init__(self, channels_in, channels_out, **kwargs):
         super(PEPX, self).__init__(kwargs)
         self.channels_in = channels_in
@@ -46,6 +48,8 @@ class COVIDNetLayer(Layer):
     This structure is not explicitly mentioned in the paper but it is clearly an higher level pattern in the
     architecture.
     """
+
+    # TODO: fix it looking at https://www.tensorflow.org/guide/keras/custom_layers_and_models
 
     def __init__(self, channels_in, channels_out, n_pepx_layers, **kwargs):
         super(COVIDNetLayer, self).__init__(kwargs)
@@ -87,6 +91,8 @@ class COVIDNet(Model):
      from chest radiography images - Linda Wang, Zhong Qiu Lin and Alexander Wong.
     Inspiration from: https://github.com/IliasPap/COVIDNet
     """
+
+    # TODO: fix it looking at https://www.tensorflow.org/guide/keras/custom_layers_and_models
 
     def __init__(self, input_shape, n_classes, **kwargs):
         super(COVIDNet, self).__init__(kwargs)
