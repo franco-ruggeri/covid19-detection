@@ -20,7 +20,7 @@ from sklearn.metrics import classification_report, confusion_matrix
 
 from covid19.datasets import covidx
 
-covidx.generate_data('/home/fruggeri/Desktop/Projects/COVIDx', 'data')
+covidx.generate_data('/home/fruggeri/Desktop/Projects/COVIDx', '../data/covidx')
 exit(-1)
 
 
