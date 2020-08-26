@@ -40,13 +40,3 @@ def balanced_flow_from_directory(image_generator, batch_size, class_names, direc
         # reset the necessary
         n_filled = 0
         batch_classes = np.zeros((batch_size, n_classes))
-
-
-def plot_images(images_arr):
-    fig, axes = plt.subplots(2, 4)
-    axes = axes.flatten()
-    for img, ax in zip(images_arr, axes):
-        ax.imshow(img)
-        ax.axis('off')
-    plt.tight_layout()
-    plt.show()
