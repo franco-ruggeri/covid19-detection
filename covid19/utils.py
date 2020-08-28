@@ -36,9 +36,9 @@ def plot_learning_curves(history, history_ft=None, save_path=None):
         plt.xlabel('epoch')
         plt.ylabel(metric)
         plt.legend()
-        plt.show()
         if save_path is not None:
             plt.savefig(save_path / (metric + '.png'))
+        plt.show()
 
 
 def plot_confusion_matrix(labels, predictions, class_names, save_path=None):
@@ -55,9 +55,9 @@ def plot_confusion_matrix(labels, predictions, class_names, save_path=None):
     sns.heatmap(cm, annot=True, fmt=".1%", xticklabels=class_names, yticklabels=class_names, cmap='Reds')
     plt.ylabel('Ground truth')
     plt.xlabel('Predicted label')
-    plt.show()
     if save_path is not None:
         plt.savefig(save_path / 'confusion_matrix.png')
+    plt.show()
 
 
 def plot_roc(labels, probabilities, save_path=None):
@@ -80,9 +80,10 @@ def plot_roc(labels, probabilities, save_path=None):
     plt.xlim([-0.05, 1.05])
     plt.ylim([-0.05, 1.05])
     plt.grid(True)
-    plt.show()
+    plt.legend()
     if save_path is not None:
         plt.savefig(save_path / 'roc.png')
+    plt.show()
 
 
 def make_classification_report(labels, predictions, class_names, save_path):

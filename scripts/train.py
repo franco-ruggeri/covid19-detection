@@ -18,7 +18,7 @@ from tensorflow_addons.metrics import F1Score
 # training settings
 LR = 0.0001
 LR_FT = LR / 10             # learning rate for fine-tuning
-EPOCHS = 20
+EPOCHS = 30
 EPOCHS_FT = EPOCHS + 10     # total epochs including fine-tuning (not just fine-tuning)
 FINE_TUNE_AT = 100          # layer at which to start fine-tuning (layers [0, fine_tune_at-1] are frozen)
 
@@ -134,8 +134,8 @@ if __name__ == '__main__':
     evaluate(dataset_path, model_path)
 
 
-# TODO: add data augmentation -> over-fitting should be reduced (i.e. test accuracy should improve)
 # TODO: add resampling -> confusion matrix should improve
+# TODO: add data augmentation -> over-fitting should be reduced (i.e. test accuracy should improve)
 # TODO: add grad-cam
 # TODO: add COVID-Net
 # TODO: add histogram for dataset
