@@ -233,7 +233,7 @@ def _copy_move_images(dataset, output_path, move):
 
 def generate_data(dataset_path, output_path, test_split=.15, validation_split=.15, move=False):
     """
-    Generate COVIDx dataset using the following sources:
+    Generates COVIDx dataset using the following sources:
     - https://github.com/ieee8023/covid-chestxray-dataset
     - https://github.com/agchung/Figure1-COVID-chestxray-dataset
     - https://github.com/agchung/Actualmed-COVID-chestxray-dataset
@@ -244,16 +244,16 @@ def generate_data(dataset_path, output_path, test_split=.15, validation_split=.1
     The generated COVIDx dataset is put in the directory indicated by output_path with the following structure:
     - train
         - covid-19
-        - pneumonia
         - normal
+        - pneumonia
     - validation
         - covid-19
-        - pneumonia
         - normal
+        - pneumonia
     - test
         - covid-19
-        - pneumonia
         - normal
+        - pneumonia
 
     Adapted from: https://github.com/lindawangg/COVID-Net/blob/master/create_COVIDx.ipynb
 
