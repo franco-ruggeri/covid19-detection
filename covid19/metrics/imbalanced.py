@@ -7,18 +7,21 @@ from sklearn.metrics import roc_curve, auc
 
 def plot_confusion_matrix(labels, predictions, class_names, save_path=None):
     """
-    Plots the confusion matrix.
+    Plots the confusion matrix. The confusion matrix is annotated with the absolute counts, while colored according
+    to the normalized values by row. In this way, even for imbalanced datasets, the diagonal is highlighted well if the
+    predictions are good.
 
     :param labels: numpy array of shape (n_samples,), ground truth (correct labels)
     :param predictions: numpy array of shape (n_samples,), predictions
     :param class_names: list of class names to use as ticks
     :param save_path: path where to save the figure
     """
-    cm = confusion_matrix(labels, predictions, normalize='true')
+    cm = confusion_matrix(labels, predictions)
+    cm_normalized = cm / cm.sum(axis=1)
     plt.figure()
-    sns.heatmap(cm, annot=True, fmt=".1%", xticklabels=class_names, yticklabels=class_names, cmap='Reds')
+    sns.heatmap(cm_normalized, annot=cm, fmt="d", xticklabels=class_names, yticklabels=class_names, cmap='Reds')
     plt.ylabel('Ground truth')
-    plt.xlabel('Predicted label')
+    plt.xlabel('Prediction')
     if save_path is not None:
         plt.savefig(save_path / 'confusion_matrix.png')
     plt.show()
@@ -50,7 +53,7 @@ def plot_roc(labels, probabilities, save_path=None):
     plt.show()
 
 
-def make_classification_report(labels, predictions, class_names, save_path):
+def make_classification_report(labels, predictions, class_names, save_path=None):
     """
     Generates a classification report including: precision, recall, f1-score, accuracy,
 
@@ -61,5 +64,7 @@ def make_classification_report(labels, predictions, class_names, save_path):
     """
     save_path = Path(save_path)
     cr = classification_report(labels, predictions, target_names=class_names)
-    with open(save_path / 'classification_report.txt', mode='w') as f:
-        f.write(cr)
+    print(cr)
+    if save_path is not None:
+        with open(save_path / 'classification_report.txt', mode='w') as f:
+            f.write(cr)

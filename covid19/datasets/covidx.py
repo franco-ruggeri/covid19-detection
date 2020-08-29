@@ -1,5 +1,5 @@
 import shutil
-import sys
+import datetime
 import cv2
 import numpy as np
 import pandas as pd
@@ -269,7 +269,7 @@ def generate_data(dataset_path, output_path, test_split=.15, validation_split=.1
 
     output_path = Path(output_path)
     output_path.mkdir(parents=True, exist_ok=True)
-    tmp_path = output_path / ('tmp' + str(np.random.randint(sys.maxsize)))
+    tmp_path = output_path / ('tmp' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
     tmp_path_sirm = tmp_path / 'sirm'
     tmp_path_rsna = tmp_path / 'rsna'
     shutil.rmtree(tmp_path, ignore_errors=True)

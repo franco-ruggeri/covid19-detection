@@ -3,3 +3,4 @@
 /models/
 /.idea/
 __pycache__/
+/covid_19_detection.egg-info/

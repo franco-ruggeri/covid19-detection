@@ -1,4 +1,5 @@
 from pathlib import Path
+import numpy as np
 import tensorflow as tf
 
 BUFFER_SIZE = 16 * 1024     # 16 KB
@@ -23,35 +24,30 @@ def image_dataset_from_directory(dataset_path, image_size, batch_size, shuffle=T
     :param image_size: tuple (height, width) which the images are resized to
     :param batch_size: integer, batch size
     :param shuffle: bool, whether to shuffle
-    :return: tuple (balanced_dataset, class_indexes), where class_labels is a dictionary (name -> label)
+    :return: tuple (balanced_dataset, class_indices), where class_indices is a dictionary (name -> label)
     """
     dataset_path = Path(dataset_path)
     class_paths = sorted([c for c in dataset_path.iterdir()])
     n_classes = len(class_paths)
-    class_indexes = {}
+    class_indices = {}
 
     def load_image(filepath):
         return _load_image(filepath, image_size)
 
     dataset = None
     for label, class_path in enumerate(class_paths):
-        class_indexes[class_path.name] = label
+        class_indices[class_path.name] = label
         label = tf.one_hot(label, n_classes)    # one-hot encoding (for categorical cross entropy)
+        class_size = len(list(class_path.iterdir()))
         filepath_ds = tf.data.Dataset.list_files(str(dataset_path / '*/*')).cache()
         if shuffle:
             filepath_ds = filepath_ds.shuffle(BUFFER_SIZE)
         image_ds = filepath_ds.map(load_image, num_parallel_calls=tf.data.experimental.AUTOTUNE)
-        label_ds = tf.data.Dataset.from_tensors(label).repeat()
-        class_ds = (
-            tf.data.Dataset.zip((image_ds, label_ds))
-            .batch(batch_size)
-            .prefetch(tf.data.experimental.AUTOTUNE)
-        )
-        if dataset is None:
-            dataset = class_ds
-        else:
-            dataset.concatenate(class_ds)
-    return dataset, class_indexes
+        label_ds = tf.data.Dataset.from_tensors(label).repeat(class_size)
+        class_ds = tf.data.Dataset.zip((image_ds, label_ds))
+        dataset = class_ds if dataset is None else dataset.concatenate(class_ds)
+    dataset = dataset.batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE)
+    return dataset, class_indices
 
 
 def image_balanced_dataset_from_directory(dataset_path, image_size, batch_size):
@@ -66,14 +62,14 @@ def image_balanced_dataset_from_directory(dataset_path, image_size, batch_size):
     :param dataset_path: path to the dataset. The directory must contain one subdirectory for each class.
     :param image_size: tuple (height, width) which the images are resized to
     :param batch_size: integer, batch size
-    :param shuffle: bool, whether to shuffle
-    :return: tuple (balanced_dataset, class_indexes, n_images), where class_labels is a dictionary (name -> label)
+    :return: tuple (balanced_dataset, class_indices, n_batches), where class_indices is a dictionary (name -> label)
+        and n_batches is the number of batches required to see all the images at least once
     """
     dataset_path = Path(dataset_path)
     class_paths = sorted([c for c in dataset_path.iterdir()])
     n_classes = len(class_paths)
-    n_images = 0
-    class_indexes = {}
+    n_batches = 0
+    class_indices = {}
     datasets = []
 
     def load_image(filepath):
@@ -81,9 +77,10 @@ def image_balanced_dataset_from_directory(dataset_path, image_size, batch_size):
 
     # make one dataset per class
     for label, class_path in enumerate(class_paths):
-        n_images += len(list(class_path.iterdir()))
-        class_indexes[class_path.name] = label
+        class_indices[class_path.name] = label
         label = tf.one_hot(label, n_classes)    # one-hot encoding (for categorical cross entropy)
+        class_size = len(list(class_path.iterdir()))
+        n_batches = max(n_batches, np.ceil(n_classes * class_size / batch_size))
         image_ds = (
             tf.data.Dataset.list_files(str(class_path / '*'))
             .cache()                            # file paths fit in memory
@@ -101,4 +98,4 @@ def image_balanced_dataset_from_directory(dataset_path, image_size, batch_size):
         .batch(batch_size)
         .prefetch(tf.data.experimental.AUTOTUNE)
     )
-    return balanced_ds, class_indexes, n_images
+    return balanced_ds, class_indices, n_batches
