@@ -18,9 +18,9 @@ def evaluate(model, dataset, output_path, class_names, covid19_label):
     covid19_probabilities = probabilities[:, covid19_label]
     covid19_binary_labels = labels_one_hot[:, covid19_label]
 
-    plot_confusion_matrix(labels, predictions, class_names, save_path=output_path / 'confusion_matrix.png')
-    plot_roc(covid19_binary_labels, covid19_probabilities, save_path=output_path / 'roc.png')
-    make_classification_report(labels, predictions, class_names, save_path=output_path / 'classification_report.txt')
+    plot_confusion_matrix(labels, predictions, class_names, save_path=output_path)
+    plot_roc(covid19_binary_labels, covid19_probabilities, save_path=output_path)
+    make_classification_report(labels, predictions, class_names, save_path=output_path)
 
 
 if __name__ == '__main__':

@@ -5,7 +5,6 @@ from covid19.preprocessing import image_balanced_dataset_from_directory, image_d
 from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.applications import ResNet50V2
-from tensorflow.keras.applications.resnet_v2 import preprocess_input
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import CategoricalCrossentropy
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, TensorBoard
@@ -28,8 +27,7 @@ VERBOSE = 2
 def make_model(n_classes):
     feature_extractor = ResNet50V2(include_top=False, pooling='avg', input_shape=INPUT_SHAPE)
     inputs = Input(shape=INPUT_SHAPE)
-    x = preprocess_input(inputs)
-    x = feature_extractor(x, training=False)                # training=False to keep BN layers in inference mode
+    x = feature_extractor(inputs, training=False)           # training=False to keep BN layers in inference mode
     outputs = Dense(n_classes, activation='softmax')(x)     # softmax necessary for AUC metric
     return Model(inputs=inputs, outputs=outputs, name='covidnet')
 
@@ -89,7 +87,7 @@ if __name__ == '__main__':
     dataset_path = Path(args.data)
     model_path = Path(args.model)
     if model_path.is_dir():
-        raise ValueError(str(model_path) + ' already exists')
+        raise FileExistsError(str(model_path) + ' already exists')
     model_path.mkdir(parents=True, exist_ok=True)
     logs_path = model_path / 'logs'
     plots_path = model_path / 'training'
@@ -119,14 +117,13 @@ if __name__ == '__main__':
 
 
 
+# TODO: test early stopping (history.epoch[-1] contains the correct number of epochs?)
 
-# TODO: test early stopping (history.epoch[-1] contains the correct number of epochs?) and new confusion matrix
-
-# TODO: debugga evaluate(), confusion matrix di merda, confronta col dataset di prima
 # TODO: run with and without resampling, confusion matrix should improve
 # TODO: add data augmentation -> over-fitting should be reduced (i.e. test accuracy should improve)
 # TODO: add grad-cam
 # TODO: add COVID-Net and train the 3 models as resnet50
 # TODO: add histogram for dataset
 
+# TODO: se ottengo risultati di merda puo' essere che la pipeline nuova e' sbagliata
 # TODO: subclass models to have a simple fit() method including fine-tuning, so that the package is easily usable

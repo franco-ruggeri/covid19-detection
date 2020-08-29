@@ -1,6 +1,6 @@
-from pathlib import Path
 import numpy as np
 import tensorflow as tf
+from pathlib import Path
 
 BUFFER_SIZE = 16 * 1024     # 16 KB
 
@@ -10,6 +10,8 @@ def _load_image(filepath, image_size):
     image = tf.image.decode_image(image, channels=3, expand_animations=False)
     image = tf.cond(tf.shape(image)[2] == 1, lambda: tf.image.grayscale_to_rgb(image), lambda: image)
     image = tf.image.resize(image, image_size)
+    image = tf.cast(image, tf.float32)  # keep range [0,255] but as float
+    image = (image / 127.5) - 1         # [0,255] -> [-1,1]
     return image
 
 
@@ -46,6 +48,7 @@ def image_dataset_from_directory(dataset_path, image_size, batch_size, shuffle=T
         label_ds = tf.data.Dataset.from_tensors(label).repeat(class_size)
         class_ds = tf.data.Dataset.zip((image_ds, label_ds))
         dataset = class_ds if dataset is None else dataset.concatenate(class_ds)
+
     dataset = dataset.batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE)
     return dataset, class_indices
 
