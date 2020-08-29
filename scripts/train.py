@@ -1,9 +1,8 @@
 import argparse
-import covid19.utils
 import numpy as np
-import tensorflow as tf
 from pathlib import Path
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from covid19.metrics import plot_learning_curves, plot_confusion_matrix, plot_roc, make_classification_report
+from covid19.preprocessing import image_balanced_dataset_from_directory, image_dataset_from_directory
 from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.applications import ResNet50V2
@@ -12,26 +11,20 @@ from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.losses import CategoricalCrossentropy
 from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard
 from tensorflow.keras.models import load_model
-from tensorflow.keras.metrics import CategoricalAccuracy, AUC, Precision, Recall, Accuracy
+from tensorflow.keras.metrics import CategoricalAccuracy, AUC, Precision, Recall
 from tensorflow_addons.metrics import F1Score
 
 # training settings
+BATCH_SIZE = 32
 LR = 0.0001
 LR_FT = LR / 10             # learning rate for fine-tuning
 EPOCHS = 30
 EPOCHS_FT = EPOCHS + 10     # total epochs including fine-tuning (not just fine-tuning)
 FINE_TUNE_AT = 100          # layer at which to start fine-tuning (layers [0, fine_tune_at-1] are frozen)
 
-IMAGE_SHAPE = (224, 224)
-INPUT_SHAPE = IMAGE_SHAPE + (3,)
-AUTO_TUNE = tf.data.experimental.AUTOTUNE
+IMAGE_SIZE = (224, 224)
+INPUT_SHAPE = IMAGE_SIZE + (3,)
 VERBOSE = 1
-
-
-def get_dataset(dataset_path, shuffle):
-    dataset_get = ImageDataGenerator()
-    dataset = dataset_get.flow_from_directory(dataset_path, target_size=IMAGE_SHAPE, shuffle=shuffle)
-    return dataset
 
 
 def train(dataset_path, model_path, logs_path):
@@ -40,10 +33,11 @@ def train(dataset_path, model_path, logs_path):
     plots_path = model_path.parent
 
     # build input pipeline
-    train_ds = get_dataset(dataset_path / 'train', shuffle=True)
-    val_ds = get_dataset(dataset_path / 'validation', shuffle=False)
-    n_classes = train_ds.num_classes
-    covid19_label = train_ds.class_indices['covid-19']
+    train_ds, classes, n_images = image_balanced_dataset_from_directory(dataset_path / 'train', IMAGE_SIZE, BATCH_SIZE)
+    val_ds, _ = image_dataset_from_directory(dataset_path / 'validation', IMAGE_SIZE, BATCH_SIZE, shuffle=False)
+    steps_per_epoch = n_images / BATCH_SIZE
+    n_classes = len(classes)
+    covid19_label = train_ds.class_indixes['covid-19']
 
     # build model
     feature_extractor = ResNet50V2(include_top=False, pooling='avg', input_shape=INPUT_SHAPE)
@@ -75,8 +69,9 @@ def train(dataset_path, model_path, logs_path):
     feature_extractor.trainable = False
     model.compile(optimizer=Adam(lr=LR), loss=loss, metrics=metrics)
     model.summary()
-    history = model.fit(train_ds, epochs=EPOCHS, validation_data=val_ds, callbacks=callbacks)
-    covid19.utils.plot_learning_curves(history, save_path=plots_path)
+    history = model.fit(train_ds, epochs=EPOCHS, steps_per_epoch=steps_per_epoch, validation_data=val_ds,
+                        callbacks=callbacks)
+    plot_learning_curves(history, save_path=plots_path)
 
     # fine-tune some layers
     feature_extractor.trainable = True
@@ -84,9 +79,9 @@ def train(dataset_path, model_path, logs_path):
         layer.trainable = False
     model.compile(optimizer=Adam(lr=LR_FT), loss=loss, metrics=metrics)
     model.summary()
-    history_ft = model.fit(train_ds, epochs=EPOCHS_FT, initial_epoch=EPOCHS, validation_data=val_ds,
-                           callbacks=callbacks)
-    covid19.utils.plot_learning_curves(history, history_ft=history_ft, save_path=plots_path)
+    history_ft = model.fit(train_ds, epochs=EPOCHS_FT, initial_epoch=EPOCHS, steps_per_epoch=steps_per_epoch,
+                           validation_data=val_ds, callbacks=callbacks)
+    plot_learning_curves(history, history_ft=history_ft, save_path=plots_path)
     model.save(model_path)
 
 
@@ -95,19 +90,20 @@ def evaluate(dataset_path, model_path):
     plots_path = model_path.parent
 
     model = load_model(model_path)
-    test_ds = get_dataset(dataset_path / 'test', shuffle=False)
-    class_names = sorted(test_ds.class_indices.keys())
-    covid19_index = test_ds.class_indices['covid-19']
+    test_ds, class_indexes = image_dataset_from_directory(dataset_path / 'test', IMAGE_SIZE, BATCH_SIZE, shuffle=False)
+    class_names = sorted(class_indexes.keys())
+    covid19_index = class_indexes['covid-19']
 
     probabilities = model.predict(test_ds)
     predictions = np.argmax(probabilities, axis=1)
-    labels = test_ds.classes
-    covid19_binary_labels = tf.one_hot(labels, test_ds.num_classes)[:, covid19_index]
+    labels_one_hot = np.array([label.numpy() for _, label in test_ds.unbatch()])
+    labels = np.argmax(labels_one_hot, axis=1)
     covid19_probabilities = probabilities[:, covid19_index]
+    covid19_binary_labels = labels_one_hot[:, covid19_index]
 
-    covid19.utils.plot_confusion_matrix(labels, predictions, class_names, save_path=plots_path)
-    covid19.utils.plot_roc(covid19_binary_labels, covid19_probabilities, save_path=plots_path)
-    covid19.utils.make_classification_report(labels, predictions, class_names, save_path=plots_path)
+    plot_confusion_matrix(labels, predictions, class_names, save_path=plots_path)
+    plot_roc(covid19_binary_labels, covid19_probabilities, save_path=plots_path)
+    make_classification_report(labels, predictions, class_names, save_path=plots_path)
 
 
 if __name__ == '__main__':
@@ -134,12 +130,12 @@ if __name__ == '__main__':
     evaluate(dataset_path, model_path)
 
 
-# TODO: add resampling -> confusion matrix should improve
+# TODO: debugga evaluate(), confusion matrix di merda, confronta col dataset di prima
+# TODO: run with and without resampling, confusion matrix should improve
 # TODO: add data augmentation -> over-fitting should be reduced (i.e. test accuracy should improve)
 # TODO: add grad-cam
-# TODO: add COVID-Net
+# TODO: add COVID-Net and train the 3 models as resnet50
 # TODO: add histogram for dataset
-# TODO: run tests
 
 # TODO: if still overfitting... add early stopping
 # TODO: subclass models to have a simple fit() method including fine-tuning, so that the package is easily usable

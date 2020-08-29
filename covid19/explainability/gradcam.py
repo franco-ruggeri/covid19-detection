@@ -10,7 +10,7 @@ class GradCAM:
         """
 
         :param model: The tensorflow model used
-        :param image_path: The directory path to the image
+        :param image_path: The directory path to the preprocessing
         :param class_index: Most probable class label
         :param layer_index: Index of the last convolutional layer
 
@@ -33,8 +33,8 @@ class GradCAM:
     def preprocess_image(self, image_path):
         """
 
-        :param image_path: The directory path to the image
-        :return: The preprocessed image
+        :param image_path: The directory path to the preprocessing
+        :return: The preprocessed preprocessing
 
         """
 
@@ -79,9 +79,9 @@ class GradCAM:
         """
 
         Assuming tensorflow has been used to construct the network, this method extracts the most probable label for
-        the image.
+        the preprocessing.
 
-        :param image: A preprocessed image, using tf.keras.preprocessing
+        :param image: A preprocessed preprocessing, using tf.keras.preprocessing
         :return: The most likely label
 
         """
@@ -148,4 +148,4 @@ class GradCAM:
             cv2.waitKey(0)
 
         else:
-            raise ValueError("The image used for generating the heatmap has not been preprocessed")
+            raise ValueError("The preprocessing used for generating the heatmap has not been preprocessed")

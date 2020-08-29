@@ -139,7 +139,7 @@ def _process_rsna_sample(row, image_path, tmp_path, label, dataset, file_paths):
             raise FileNotFoundError('file ' + str(filepath) + ' not found')
         file_paths.add(filepath)
 
-        # convert image from .dcm to .png
+        # convert preprocessing from .dcm to .png
         ds = dicom.dcmread(filepath)
         pixel_array_numpy = ds.pixel_array
         filepath = tmp_path / (filepath.stem + '.png')
@@ -259,9 +259,9 @@ def generate_data(dataset_path, output_path, test_split=.15, validation_split=.1
 
     :param dataset_path: path to the directory containing the datasets described above
     :param output_path: path where to put COVIDx dataset
-    :param test_split: fraction of data to be used as test set
-    :param validation_split: fraction of training data to be used as validation set
-    :param move: whether to move the images instead of copying (more efficient)
+    :param test_split: float, fraction of data to be used as test set (must be between 0 and 1)
+    :param validation_split: float, fraction of training data to be used as validation set (must be between 0 and 1)
+    :param move: bool, whether to move the images instead of copying (more efficient)
     """
     dataset_path = Path(dataset_path)
     if not dataset_path.is_dir():
