@@ -3,11 +3,10 @@ import numpy as np
 import cv2
 import imutils
 
-
 class GradCAM:
     """Implementation of Grad-CAM using tensorflow and keras"""
 
-    def __init__(self, model, image_path, class_index=None, layer_index=None):
+    def __init__(self, model, image_path, class_index=None, layer_name=None, composed_model=False):
         """
 
         :param model: The tensorflow model used
@@ -16,21 +15,17 @@ class GradCAM:
         :param layer_index: Index of the last convolutional layer
 
         """
-
+        self.composed_model = composed_model
         self.model = model
         self.original_image = cv2.imread(image_path)
         self.image = None
         self.is_image_preprocessed = False
         self.class_index = class_index
-        self.layer_index = layer_index
+        self.layer_name = layer_name
 
         # if layer name is not known, try to find the last convolutional layer of the model:
-        if layer_index is None:
-            self.layer_index = self.find_layer()
-
-        if self.is_image_preprocessed is False:
-            self.image = self.preprocess_image(image_path)
-            self.is_image_preprocessed = True
+        if layer_name is None:
+            self.layer_name = self.find_layer()
 
         if class_index is None:
             self.class_index = self.find_class_index(self.image)
@@ -61,10 +56,22 @@ class GradCAM:
         # iterate over the layers in reversed order, when a four dimensional output is encountered this is assumed to be
         # the convolutional layer
 
-        for idx in reversed(range(len(self.model.layers))):
-            output_shape = self.model.layers[idx].output.shape
-            if len(output_shape) == 4:
-                return idx
+        if self.composed_model:
+
+            for layer in reversed(self.model.layers):
+                if layer.name == 'resnet50':
+
+                    for model_layer in reversed(layer.layers):
+
+                        output_shape = model_layer.output.shape
+                        if len(output_shape) == 4:
+                            return model_layer.name
+        else:
+
+            for idx in reversed(range(len(self.model.layers))):
+                output_shape = self.model.layers[idx].output.shape
+                if len(output_shape) == 4:
+                    return idx
 
         raise ValueError("Could not find a matching convolutional layer, its output shape should be 4 dimensional")
 
@@ -80,6 +87,7 @@ class GradCAM:
         """
 
         predictions = self.model.predict(image)
+        print(predictions)
         class_index = np.argmax(predictions[0])
         return class_index
 
@@ -89,16 +97,26 @@ class GradCAM:
 
         if self.is_image_preprocessed:
 
-            grad_model = tf.keras.models.Model(inputs=[self.model.inputs],
-                                               outputs=[self.model.get_layer(index=self.layer_index).output,
-                                               self.model.output])
+            if self.composed_model:
+
+                inputs = [self.model.get_layer('resnet50').inputs]
+                outputs = [self.model.get_layer('resnet50').get_layer(self.layer_name).output,
+                           self.model.get_layer('resnet50').output]
+
+            else:
+
+                inputs = [self.model.inputs]
+                outputs = [self.model.get_layer(self.layer_name).output, self.model.output]
+
+            grad_model = tf.keras.models.Model(inputs=inputs,
+                                               outputs=outputs)
 
             with tf.GradientTape() as tape:
                 inputs = tf.cast(self.image, tf.float32)
                 convolutional_outputs, predictions = grad_model(inputs)
                 loss = predictions[:, self.class_index]
 
-            #output = convolutional_outputs[0]
+            # output = convolutional_outputs[0]
             gradients = tape.gradient(loss, convolutional_outputs)
 
             cast_conv_outputs = tf.cast(convolutional_outputs > 0, "float32")
@@ -131,41 +149,3 @@ class GradCAM:
 
         else:
             raise ValueError("The image used for generating the heatmap has not been preprocessed")
-
-
-# test Grad-CAM
-# if __name__ == "__main__":
-#     image_path = 'data/COVIDx/train/COVID-19/01E392EE-69F9-4E33-BFCE-E5C968654078.jpeg'
-#     model = tf.keras.applications.ResNet50(weights='imagenet')
-#
-#     original = cv2.imread(image_path)
-#     resized = cv2.resize(original, (224, 224))
-#
-#     image = tf.keras.preprocessing.image.load_img(image_path, target_size=(224, 224))
-#     image = tf.keras.preprocessing.image.img_to_array(image)
-#     image = np.expand_dims(image, axis=0)
-#     image = tf.keras.applications.imagenet_utils.preprocess_input(image)
-#
-#     predictions = model.predict(image)
-#     class_index = np.argmax(predictions[0])
-#
-#     decoded = tf.keras.applications.imagenet_utils.decode_predictions(predictions)
-#     imagenetID, label, prob = decoded[0][0]
-#     label = "{}: {:.2f}%".format(label, prob * 100)
-#     print("[INFO] {}".format(label))
-#
-#     cam = GradCAM(model, class_index)
-#     heatmap = cam.generate_heatmap(image)
-#
-#     heatmap = cv2.resize(heatmap, (original.shape[1], original.shape[0]))
-#     heatmap, output = cam.overlay_heatmap(heatmap, original, alpha=0.5)
-#
-#     cv2.rectangle(output, (0, 0), (340, 40), (0, 0, 0), -1)
-#     cv2.putText(output, label, (10, 25), cv2.FONT_HERSHEY_SIMPLEX,
-#                 0.8, (255, 255, 255), 2)
-#     # display the original image and resulting heatmap and output image
-#     # to our screen
-#     output = np.vstack([original, heatmap, output])
-#     output = imutils.resize(output, height=700)
-#     cv2.imshow("Output", output)
-#     cv2.waitKey(0)
