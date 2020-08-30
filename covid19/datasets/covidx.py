@@ -7,52 +7,78 @@ import pydicom as dicom
 from pathlib import Path
 from tqdm import tqdm
 
-LABELS = ['covid-19', 'pneumonia', 'normal']
+LABELS = ['covid-19', 'normal', 'pneumonia']
+PREFIX = 'COVIDx'
 
 
-def _process_cohen_data(dataset_path):
+def _get_filename(count):
+    return PREFIX + '_{:05d}'.format(count) + '.png'
+
+
+def _copy_image_with_gray_scale(source, destination):
+    image = cv2.imread(str(source), cv2.IMREAD_GRAYSCALE)       # to gray-scale
+    cv2.imwrite(str(destination), image)
+
+
+def _process_dataset_1(dataset, dataset_path, tmp_path):
     image_path = dataset_path / 'images'
     metadata_path = dataset_path / 'metadata.csv'
-    csv_content = pd.read_csv(metadata_path)
-    dataset = []
-    urls = set()  # set of URLs needed in load_sirm_data() to avoid overlaps
-
-    # drop images with invalid views (lateral or other non-frontal views)
     valid_views = ["PA", "AP", "AP Supine", "AP erect"]
-    valid_idx = csv_content.view.isin(valid_views)
-    csv_content = csv_content[valid_idx]
+    csv_content = pd.read_csv(metadata_path)
+    count = len(dataset)
+    urls = set()
 
     with tqdm(total=len(csv_content)) as bar:
-        bar.set_description('Processing cohen dataset')
+        bar.set_description('Processing dataset 1')
         for _, row in csv_content.iterrows():
             bar.update()
+
+            # skip invalid views (e.g. lateral)
+            if row['view'] not in valid_views:
+                continue
+
+            # check label
             label = row['finding'].split(',')[0].lower()      # take the first finding
-            assert row['view'] in valid_views
             if label in LABELS:
-                patient_id = row['patientid']
+
+                # add URL (dataset 4 checks for overlaps)
                 url = row['url']
+                urls.add(url)
+
+                # check filepath
                 filepath = image_path / row['filename']
                 if not filepath.is_file():
                     raise FileNotFoundError('file ' + str(filepath) + ' not found')
-                dataset.append((patient_id, filepath, label))
-                urls.add(url)
+
+                # copy image in gray-scale
+                new_filepath = tmp_path / (PREFIX + '_{:05d}'.format(count) + '.png')
+                _copy_image_with_gray_scale(filepath, new_filepath)
+                count += 1
+
+                # add to dataset
+                patient_id = row['patientid']
+                dataset.append((patient_id, new_filepath, label))
     return dataset, urls
 
 
-def _process_figure1_data(dataset_path):
+def _process_dataset_2(dataset, dataset_path, tmp_path):
     image_path = dataset_path / 'images'
     metadata_path = dataset_path / 'metadata.csv'
     csv_content = pd.read_csv(metadata_path, encoding='ISO-8859-1')
-    dataset = []
+    count = len(dataset)
 
     with tqdm(total=len(csv_content)) as bar:
-        bar.set_description('Processing figure1 dataset')
+        bar.set_description('Processing dataset 2')
         for _, row in csv_content.iterrows():
             bar.update()
+
+            # check label
             label = row['finding']
             if str(label) != 'nan':
                 label = label.lower()
             if label in LABELS:
+
+                # check filepath
                 patient_id = row['patientid']
                 filepath = image_path / patient_id
                 if filepath.with_suffix('.jpg').is_file():
@@ -61,53 +87,75 @@ def _process_figure1_data(dataset_path):
                     filepath = filepath.with_suffix('.png')
                 else:
                     raise FileNotFoundError('file ' + str(filepath) + ' not found')
-                dataset.append((patient_id, filepath, label))
+
+                # copy image in gray-scale
+                new_filepath = tmp_path / _get_filename(count)
+                _copy_image_with_gray_scale(filepath, new_filepath)
+                count += 1
+
+                # add to dataset
+                dataset.append((patient_id, new_filepath, label))
     return dataset
 
 
-def _process_actualmed_data(dataset_path):
+def _process_dataset_3(dataset, dataset_path, tmp_path):
     image_path = dataset_path / 'images'
     metadata_path = dataset_path / 'metadata.csv'
     csv_content = pd.read_csv(metadata_path)
-    dataset = []
+    count = len(dataset)
 
     with tqdm(total=len(csv_content)) as bar:
-        bar.set_description('Processing actualmed dataset')
+        bar.set_description('Processing dataset 3')
         for _, row in csv_content.iterrows():
             bar.update()
+
+            # check label
             label = row['finding']
             if str(label) != 'nan':
                 label = label.lower()
             if label in LABELS:
+
+                # check filepath
                 patient_id = row['patientid']
                 filepath = image_path / row['imagename']
                 if not filepath.is_file():
                     raise FileNotFoundError('file ' + str(filepath) + ' not found')
-                dataset.append((patient_id, filepath, label))
+
+                # copy image in gray-scale
+                new_filepath = tmp_path / _get_filename(count)
+                _copy_image_with_gray_scale(filepath, new_filepath)
+                count += 1
+
+                # add to dataset
+                dataset.append((patient_id, new_filepath, label))
     return dataset
 
 
-def _process_sirm_data(dataset_path, tmp_path, used_urls):
+def _process_dataset_4(dataset, dataset_path, tmp_path, urls):
     image_path = dataset_path / 'COVID-19'
     metadata_path = dataset_path / 'COVID-19.metadata.xlsx'
-    csv_content = pd.read_excel(metadata_path)
     bad_patient_ids = {'100', '101', '102', '103', '104', '105', '110', '111', '112', '113', '122', '123', '124', '125',
                        '126', '217'}
-    dataset = []
+    csv_content = pd.read_excel(metadata_path)
+    count = len(dataset)
 
     with tqdm(total=len(csv_content)) as bar:
-        bar.set_description('Processing sirm dataset')
+        bar.set_description('Processing dataset 4')
         for _, row in csv_content.iterrows():
             bar.update()
+            label = LABELS[0]
 
-            # skip bad images and overlaps
+            # skip bad images
             patient_id = row['FILE NAME'].split('(')[1].split(')')[0]
-            url = row['URL']
-            if patient_id in bad_patient_ids or url in used_urls:
+            if patient_id in bad_patient_ids:
                 continue
 
-            # get fields
-            label = LABELS[0]
+            # check URL (overlaps)
+            url = row['URL']
+            if url in urls:
+                continue
+
+            # check filepath
             suffix = '.' + row['FORMAT'].lower()
             filepath = image_path / row['FILE NAME']
             filepath = filepath.with_suffix(suffix)
@@ -117,66 +165,68 @@ def _process_sirm_data(dataset_path, tmp_path, used_urls):
                 if not filepath.is_file():
                     raise FileNotFoundError('file ' + str(filepath) + ' not found')
 
-            # convert color to gray scale
-            image = cv2.imread(str(filepath))
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            filepath = tmp_path / filepath.name
-            cv2.imwrite(str(filepath), image)
+            # copy image in gray-scale
+            new_filepath = tmp_path / _get_filename(count)
+            _copy_image_with_gray_scale(filepath, new_filepath)
+            count += 1
 
-            # add sample
-            dataset.append((patient_id, filepath, label))
-
+            # add to dataset
+            dataset.append((patient_id, new_filepath, label))
     return dataset
 
 
-def _process_rsna_sample(row, image_path, tmp_path, label, dataset, file_paths):
+def _process_dataset_5_sample(dataset, file_paths, tmp_path, row, image_path, label):
     patient_id = row['patientId']
     filepath = image_path / patient_id
     filepath = filepath.with_suffix('.dcm')
+    count = len(dataset)
 
-    if filepath not in file_paths:
+    # check filepath
+    if filepath not in file_paths:  # repetition
         if not filepath.is_file():
             raise FileNotFoundError('file ' + str(filepath) + ' not found')
         file_paths.add(filepath)
 
-        # convert preprocessing from .dcm to .png
+        # copy image from .dcm to .png
         ds = dicom.dcmread(filepath)
         pixel_array_numpy = ds.pixel_array
-        filepath = tmp_path / (filepath.stem + '.png')
-        cv2.imwrite(str(filepath), pixel_array_numpy)
+        new_filepath = tmp_path / _get_filename(count)
+        cv2.imwrite(str(new_filepath), pixel_array_numpy)
 
-        # add sample
-        dataset.append((patient_id, filepath, label))
+        # copy image in gray-scale
+        _copy_image_with_gray_scale(new_filepath, new_filepath)
+
+        # add to dataset
+        dataset.append((patient_id, new_filepath, label))
+    return dataset, file_paths
 
 
-def _process_rsna_data(dataset_path, tmp_path):
+def _process_dataset_5(dataset, dataset_path, tmp_path):
     image_path = dataset_path / 'stage_2_train_images'
-    dataset = []
     file_paths = set()
 
     # get normal samples
     metadata_path = dataset_path / 'stage_2_detailed_class_info.csv'
     csv_content = pd.read_csv(metadata_path)
     with tqdm(total=len(csv_content)) as bar:
-        bar.set_description('Processing rsna dataset (normal)')
+        bar.set_description('Processing dataset 5 (part 1)')
         for _, row in csv_content.iterrows():
             bar.update()
             label = row['class'].lower()
             if label in LABELS:
-                _process_rsna_sample(row, image_path, tmp_path, label, dataset, file_paths)
+                dataset, file_paths = _process_dataset_5_sample(dataset, file_paths, tmp_path, row, image_path, label)
 
     # get pneumonia samples
     metadata_path = dataset_path / 'stage_2_train_labels.csv'
     csv_content = pd.read_csv(metadata_path)
     with tqdm(total=len(csv_content)) as bar:
-        bar.set_description('Processing rsna dataset (pneumonia)')
+        bar.set_description('Processing dataset 5 (part 2)')
         for _, row in csv_content.iterrows():
             bar.update()
             label = row['Target']
             if label == 1:
-                label = LABELS[1]
-                _process_rsna_sample(row, image_path, tmp_path, label, dataset, file_paths)
-
+                label = LABELS[2]
+                dataset, file_paths = _process_dataset_5_sample(dataset, file_paths, tmp_path, row, image_path, label)
     return dataset
 
 
@@ -209,7 +259,7 @@ def _stratified_sampling(dataset, split):
     return train_set, test_set
 
 
-def _copy_move_images(dataset, output_path, move):
+def _move_images(dataset, output_path):
     # create paths
     shutil.rmtree(output_path, ignore_errors=True)
     output_path.mkdir()
@@ -217,7 +267,7 @@ def _copy_move_images(dataset, output_path, move):
         label_path = output_path / label
         label_path.mkdir()
 
-    # move/copy images
+    # move images
     with tqdm(total=len(dataset)) as bar:
         bar.set_description('Building ' + str(output_path))
         for sample in dataset:
@@ -225,20 +275,17 @@ def _copy_move_images(dataset, output_path, move):
             label = sample[2]
             filepath = sample[1]
             new_filepath = output_path / label / filepath.name
-            if move:
-                shutil.move(filepath, new_filepath)
-            else:
-                shutil.copy(sample[1], new_filepath)
+            shutil.move(filepath, new_filepath)
 
 
-def generate_data(dataset_path, output_path, test_split=.15, validation_split=.15, move=False):
+def generate_data(dataset_path, output_path, test_split=.15, validation_split=.15, seed=None):
     """
     Generates COVIDx dataset using the following sources:
-    - https://github.com/ieee8023/covid-chestxray-dataset
-    - https://github.com/agchung/Figure1-COVID-chestxray-dataset
-    - https://github.com/agchung/Actualmed-COVID-chestxray-dataset
-    - https://www.kaggle.com/tawsifurrahman/covid19-radiography-database
-    - https://www.kaggle.com/c/rsna-pneumonia-detection-challenge
+    - 1) https://github.com/ieee8023/covid-chestxray-dataset
+    - 2) https://github.com/agchung/Figure1-COVID-chestxray-dataset
+    - 3) https://github.com/agchung/Actualmed-COVID-chestxray-dataset
+    - 4) https://www.kaggle.com/tawsifurrahman/covid19-radiography-database
+    - 5) https://www.kaggle.com/c/rsna-pneumonia-detection-challenge
     These datasets must be downloaded and put in the directory indicated by dataset_path.
 
     The generated COVIDx dataset is put in the directory indicated by output_path with the following structure:
@@ -261,8 +308,10 @@ def generate_data(dataset_path, output_path, test_split=.15, validation_split=.1
     :param output_path: path where to put COVIDx dataset
     :param test_split: float, fraction of data to be used as test set (must be between 0 and 1)
     :param validation_split: float, fraction of training data to be used as validation set (must be between 0 and 1)
-    :param move: bool, whether to move the images instead of copying (more efficient)
     """
+    if seed is not None:
+        np.random.seed(seed)
+
     dataset_path = Path(dataset_path)
     if not dataset_path.is_dir():
         raise ValueError('Invalid dataset path')
@@ -270,25 +319,23 @@ def generate_data(dataset_path, output_path, test_split=.15, validation_split=.1
     output_path = Path(output_path)
     output_path.mkdir(parents=True, exist_ok=True)
     tmp_path = output_path / ('tmp' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
-    tmp_path_sirm = tmp_path / 'sirm'
-    tmp_path_rsna = tmp_path / 'rsna'
     shutil.rmtree(tmp_path, ignore_errors=True)
     tmp_path.mkdir()
-    tmp_path_sirm.mkdir()
-    tmp_path_rsna.mkdir()
 
-    dataset, urls = _process_cohen_data(dataset_path / 'covid-chestxray-dataset')
-    dataset += _process_figure1_data(dataset_path / 'Figure1-COVID-chestxray-dataset')
-    dataset += _process_actualmed_data(dataset_path / 'Actualmed-COVID-chestxray-dataset')
-    dataset += _process_sirm_data(dataset_path / 'COVID-19 Radiography Database', tmp_path_sirm, urls)
-    dataset += _process_rsna_data(dataset_path / 'rsna-pneumonia-detection-challenge', tmp_path_rsna)
+    dataset = []
+    urls = set()
+    dataset, urls = _process_dataset_1(dataset, dataset_path / 'covid-chestxray-dataset', tmp_path)
+    dataset = _process_dataset_2(dataset, dataset_path / 'Figure1-COVID-chestxray-dataset', tmp_path)
+    dataset = _process_dataset_3(dataset, dataset_path / 'Actualmed-COVID-chestxray-dataset', tmp_path)
+    dataset = _process_dataset_4(dataset, dataset_path / 'COVID-19 Radiography Database', tmp_path, urls)
+    dataset = _process_dataset_5(dataset, dataset_path / 'rsna-pneumonia-detection-challenge', tmp_path)
 
     train_set, test_set = _stratified_sampling(dataset, test_split)
     train_set, val_set = _stratified_sampling(train_set, validation_split)
 
-    _copy_move_images(train_set, output_path / 'train', move)
-    _copy_move_images(val_set, output_path / 'validation', move)
-    _copy_move_images(test_set, output_path / 'test', move)
+    _move_images(train_set, output_path / 'train')
+    _move_images(val_set, output_path / 'validation')
+    _move_images(test_set, output_path / 'test')
     shutil.rmtree(tmp_path)
 
     print()

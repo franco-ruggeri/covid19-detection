@@ -17,7 +17,7 @@ LR = 0.0001
 LR_FT = LR / 10             # learning rate for fine-tuning
 EPOCHS = 20
 EPOCHS_FT = 10              # epochs for fine-tuning
-FINE_TUNE_AT = 100          # layer at which to start fine-tuning (layers [0, fine_tune_at-1] are frozen)
+FINE_TUNE_AT = 150          # layer at which to start fine-tuning (layers [0, fine_tune_at-1] are frozen)
 
 IMAGE_SIZE = (224, 224)
 INPUT_SHAPE = IMAGE_SIZE + (3,)
@@ -51,15 +51,13 @@ def get_metrics(n_classes, covid19_label):
 
 def get_callbacks(model_path, logs_path):
     return [
-        ModelCheckpoint(filepath=model_path.with_name(model_path.stem + '-{epoch:02d}-{val_auc:.2f}-{val_f-score:.2f}' +
-                                                      model_path.suffix), verbose=VERBOSE),
-        EarlyStopping(monitor='val_auc', mode='max', patience=2, restore_best_weights=True, verbose=VERBOSE),
+        ModelCheckpoint(filepath=model_path, monitor='val_auc', mode='max', save_best_only=True, verbose=VERBOSE),
+        EarlyStopping(monitor='val_auc', mode='max', patience=5, restore_best_weights=True, verbose=VERBOSE),
         TensorBoard(log_dir=logs_path, profile_batch=0)
     ]
 
 
-def train(model, train_ds, val_ds, n_batches, learning_rate, epochs, initial_epoch, loss, metrics, callbacks,
-          fine_tune=False):
+def train(model, train_ds, val_ds, learning_rate, epochs, initial_epoch, loss, metrics, callbacks, fine_tune=False):
     # set trainable layers
     feature_extractor = model.layers[-2]
     feature_extractor.trainable = False
@@ -71,8 +69,8 @@ def train(model, train_ds, val_ds, n_batches, learning_rate, epochs, initial_epo
     # compile and fit
     model.compile(optimizer=Adam(lr=learning_rate), loss=loss, metrics=metrics)
     model.summary()
-    return model.fit(train_ds, epochs=epochs, initial_epoch=initial_epoch, steps_per_epoch=n_batches,
-                     validation_data=val_ds, callbacks=callbacks)
+    return model.fit(train_ds, epochs=epochs+initial_epoch, initial_epoch=initial_epoch,
+                     steps_per_epoch=train_ds.n_batches, validation_data=val_ds, callbacks=callbacks)
 
 
 if __name__ == '__main__':
@@ -88,17 +86,17 @@ if __name__ == '__main__':
     model_path = Path(args.model)
     if model_path.is_dir():
         raise FileExistsError(str(model_path) + ' already exists')
-    model_path.mkdir(parents=True, exist_ok=True)
+    model_path.mkdir(parents=True)
     logs_path = model_path / 'logs'
     plots_path = model_path / 'training'
     model_path = model_path / 'model.h5'
     plots_path.mkdir()
 
     # build input pipeline
-    train_ds, classes, n_batches = image_balanced_dataset_from_directory(dataset_path / 'train', IMAGE_SIZE, BATCH_SIZE)
-    val_ds, _ = image_dataset_from_directory(dataset_path / 'validation', IMAGE_SIZE, BATCH_SIZE, shuffle=False)
-    n_classes = len(classes)
-    covid19_label = classes['covid-19']
+    train_ds = image_balanced_dataset_from_directory(dataset_path / 'train', IMAGE_SIZE, BATCH_SIZE)
+    val_ds = image_dataset_from_directory(dataset_path / 'validation', IMAGE_SIZE, BATCH_SIZE, shuffle=False)
+    n_classes = len(train_ds.class_indices)
+    covid19_label = train_ds.class_indices['covid-19']
 
     # compose model
     model = make_model(n_classes)
@@ -107,14 +105,12 @@ if __name__ == '__main__':
     loss = get_loss()
     metrics = get_metrics(n_classes, covid19_label)
     callbacks = get_callbacks(model_path, logs_path)
-    history = train(model, train_ds, val_ds, n_batches, LR, EPOCHS, 0, loss, metrics, callbacks)
-    history_ft = train(model, train_ds, val_ds, n_batches, LR_FT, history.epoch[-1] + 1 + EPOCHS_FT, history[-1] + 1,
-                       loss, metrics, callbacks, fine_tune=True)
-
-    # save model and learning curves
+    history = train(model, train_ds, val_ds, LR, EPOCHS, 0, loss, metrics, callbacks)
+    model.save(model_path.with_name(model_path.stem + '_no_finetuning' + model_path.suffix))
+    history_ft = train(model, train_ds, val_ds, LR_FT, EPOCHS_FT, history.epoch[-1] + 1, loss, metrics,
+                       callbacks, fine_tune=True)
     model.save(model_path)
     plot_learning_curves(history, history_ft, save_path=plots_path)
-
 
 
 # TODO: test early stopping (history.epoch[-1] contains the correct number of epochs?)

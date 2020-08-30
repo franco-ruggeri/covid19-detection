@@ -26,7 +26,8 @@ def image_dataset_from_directory(dataset_path, image_size, batch_size, shuffle=T
     :param image_size: tuple (height, width) which the images are resized to
     :param batch_size: integer, batch size
     :param shuffle: bool, whether to shuffle
-    :return: tuple (balanced_dataset, class_indices), where class_indices is a dictionary (name -> label)
+    :return: dataset, containing the following attribute (not available in a standard tf.data.Dataset):
+        - class_indices: dictionary (name -> label)
     """
     dataset_path = Path(dataset_path)
     class_paths = sorted([c for c in dataset_path.iterdir()])
@@ -48,14 +49,14 @@ def image_dataset_from_directory(dataset_path, image_size, batch_size, shuffle=T
         label_ds = tf.data.Dataset.from_tensors(label).repeat(class_size)
         class_ds = tf.data.Dataset.zip((image_ds, label_ds))
         dataset = class_ds if dataset is None else dataset.concatenate(class_ds)
-
     dataset = dataset.batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE)
-    return dataset, class_indices
+    dataset.class_indices = class_indices
+    return dataset
 
 
 def image_balanced_dataset_from_directory(dataset_path, image_size, batch_size):
     """
-    Creates a tf.data.Dataset generating (infinitely) balanced batches. The strategy used is resampling, i.e. the
+    Creates a tf.data.Dataset generating (infinitely) balanced batches. The strategy used is over-sampling, i.e. the
     batches are filled by sampling uniformly across different datasets, one for each class.
 
     Each samples is a tuple (image, label), where label is one-hot encoded.
@@ -65,8 +66,9 @@ def image_balanced_dataset_from_directory(dataset_path, image_size, batch_size):
     :param dataset_path: path to the dataset. The directory must contain one subdirectory for each class.
     :param image_size: tuple (height, width) which the images are resized to
     :param batch_size: integer, batch size
-    :return: tuple (balanced_dataset, class_indices, n_batches), where class_indices is a dictionary (name -> label)
-        and n_batches is the number of batches required to see all the images at least once
+    :return: balanced dataset, containing the following attributes (not available in a standard tf.data.Dataset):
+        - class_indices: dictionary (name -> label)
+        - n_batches: number of batches required to see all the images at least once
     """
     dataset_path = Path(dataset_path)
     class_paths = sorted([c for c in dataset_path.iterdir()])
@@ -101,4 +103,6 @@ def image_balanced_dataset_from_directory(dataset_path, image_size, batch_size):
         .batch(batch_size)
         .prefetch(tf.data.experimental.AUTOTUNE)
     )
-    return balanced_ds, class_indices, n_batches
+    balanced_ds.class_indices = class_indices
+    balanced_ds.n_batches = n_batches
+    return balanced_ds

@@ -38,9 +38,9 @@ if __name__ == '__main__':
     output_path.mkdir(parents=True, exist_ok=True)
 
     # build input pipeline
-    test_ds, class_indices = image_dataset_from_directory(dataset_path, IMAGE_SIZE, BATCH_SIZE, shuffle=False)
-    class_names = sorted(class_indices.keys())
-    covid19_label = class_indices['covid-19']
+    test_ds = image_dataset_from_directory(dataset_path, IMAGE_SIZE, BATCH_SIZE, shuffle=False)
+    class_names = sorted(test_ds.class_indices.keys())
+    covid19_label = test_ds.class_indices['covid-19']
 
     # evaluate
     model = load_model(model_path)
