@@ -2,7 +2,7 @@ import argparse
 import numpy as np
 from pathlib import Path
 from covid19.metrics import plot_learning_curves
-from covid19.preprocessing import image_dataset_from_directory
+from covid19.datasets import image_dataset_from_directory
 from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.applications import ResNet50V2
@@ -66,13 +66,10 @@ def get_class_weights(train_ds):
     class_weights = {}
 
     for class_name, class_label in train_ds.class_indices.items():
-        class_label = np.argmax(class_label)    # one-hot encoding -> integer
-        n = len(np.where(train_ds.classes[:, class_label] == 1)[0])
-
         # scale weights by total / n_classes to keep the loss to a similar magnitude
         # see https://www.tensorflow.org/tutorials/structured_data/imbalanced_data#class_weights
+        n = len(np.where(train_ds.classes == class_label)[0])
         class_weights[class_label] = (1 / n) * (total / n_classes)
-
     return class_weights
 
 
@@ -130,8 +127,8 @@ def main():
     callbacks = get_callbacks(model_path, logs_path)
     history = train(model, train_ds, val_ds, LR, EPOCHS, 0, loss, metrics, callbacks, class_weights)
     model.save(model_path.with_name(model_path.stem + '_no_finetuning' + model_path.suffix))
-    history_ft = train(model, train_ds, val_ds, LR_FT, EPOCHS_FT, history.epoch[-1] + 1, loss, metrics, class_weights,
-                       callbacks, fine_tune=True)
+    history_ft = train(model, train_ds, val_ds, LR_FT, EPOCHS_FT, history.epoch[-1] + 1, loss, metrics, callbacks,
+                       class_weights, fine_tune=True)
     model.save(model_path)
     plot_learning_curves(history, history_ft, save_path=plots_path)
 

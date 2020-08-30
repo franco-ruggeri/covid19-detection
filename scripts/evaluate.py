@@ -3,7 +3,7 @@ import numpy as np
 import tensorflow as tf
 from pathlib import Path
 from covid19.metrics import plot_confusion_matrix, plot_roc, make_classification_report
-from covid19.preprocessing import image_dataset_from_directory
+from covid19.datasets import image_dataset_from_directory
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
