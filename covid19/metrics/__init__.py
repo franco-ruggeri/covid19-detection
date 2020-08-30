@@ -1,2 +1,2 @@
-from covid19.metrics.imbalanced import *
-from covid19.metrics.training import *
+from covid19.metrics._imbalanced import *
+from covid19.metrics._training import *

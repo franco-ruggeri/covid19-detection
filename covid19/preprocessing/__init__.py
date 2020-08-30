@@ -1,1 +1,1 @@
-from covid19.preprocessing.image_dataset import *
+from covid19.preprocessing._image_dataset import image_dataset_from_directory

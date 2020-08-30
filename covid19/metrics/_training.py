@@ -11,7 +11,6 @@ def plot_learning_curves(history, history_ft=None, save_path=None):
     :param history_ft: History object returned by tf.keras.Model.fit() including the fine-tuning epochs. If this
         argument is provided, history must contain the History object of without the fine-tuning epochs.
     """
-    save_path = Path(save_path)
     epochs = history.epoch[-1]
 
     for metric in history.history.keys():
@@ -34,5 +33,6 @@ def plot_learning_curves(history, history_ft=None, save_path=None):
         plt.ylabel(metric)
         plt.legend()
         if save_path is not None:
+            save_path = Path(save_path)
             plt.savefig(save_path / (metric + '.png'))
         plt.show()

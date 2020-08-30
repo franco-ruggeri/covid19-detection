@@ -23,6 +23,7 @@ def plot_confusion_matrix(labels, predictions, class_names, save_path=None):
     plt.ylabel('Ground truth')
     plt.xlabel('Prediction')
     if save_path is not None:
+        save_path = Path(save_path)
         plt.savefig(save_path / 'confusion_matrix.png')
     plt.show()
 
@@ -49,6 +50,7 @@ def plot_roc(labels, probabilities, save_path=None):
     plt.grid(True)
     plt.legend()
     if save_path is not None:
+        save_path = Path(save_path)
         plt.savefig(save_path / 'roc.png')
     plt.show()
 
@@ -66,5 +68,6 @@ def make_classification_report(labels, predictions, class_names, save_path=None)
     cr = classification_report(labels, predictions, target_names=class_names)
     print(cr)
     if save_path is not None:
+        save_path = Path(save_path)
         with open(save_path / 'classification_report.txt', mode='w') as f:
             f.write(cr)
