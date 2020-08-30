@@ -31,7 +31,7 @@ def evaluate(model, dataset, output_path, class_names, covid19_label):
     make_classification_report(labels, predictions, class_names, save_path=output_path)
 
 
-if __name__ == '__main__':
+def main():
     # command-line arguments
     parser = argparse.ArgumentParser(description='Train classifier on COVIDx dataset.')
     parser.add_argument('data', type=str, help='Path to COVIDx dataset')
@@ -56,3 +56,7 @@ if __name__ == '__main__':
 
     # evaluate
     evaluate(model, test_ds, output_path, class_names, covid19_label)
+
+
+if __name__ == '__main__':
+    main()

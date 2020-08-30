@@ -93,7 +93,7 @@ def train(model, train_ds, val_ds, learning_rate, epochs, initial_epoch, loss, m
                      callbacks=callbacks, class_weight=class_weights)
 
 
-if __name__ == '__main__':
+def main():
     # command-line arguments
     parser = argparse.ArgumentParser(description='Train classifier on COVIDx dataset.')
     parser.add_argument('data', type=str, help='Path to COVIDx dataset')
@@ -134,6 +134,10 @@ if __name__ == '__main__':
                        callbacks, fine_tune=True)
     model.save(model_path)
     plot_learning_curves(history, history_ft, save_path=plots_path)
+
+
+if __name__ == '__main__':
+    main()
 
 
 # TODO: run with and without class weights, confusion matrix should improve
