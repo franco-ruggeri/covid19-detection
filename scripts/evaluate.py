@@ -5,15 +5,9 @@ from pathlib import Path
 from covid19.metrics import plot_confusion_matrix, plot_roc, make_classification_report
 from covid19.datasets import image_dataset_from_directory
 from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow_addons.metrics import F1Score
 
 VERBOSE = 2
-
-
-def get_dataset(dataset_path, shuffle=True):
-    image_generator = ImageDataGenerator()
-    dataset = image_generator.flow_from_directory(dataset_path, target_size=IMAGE_SIZE, shuffle=shuffle)
-    return dataset
 
 
 def evaluate(model, dataset, output_path, class_names, covid19_label):
@@ -46,7 +40,7 @@ def main():
     output_path.mkdir(parents=True, exist_ok=True)
 
     # load model
-    model = load_model(model_path)
+    model = load_model(model_path, custom_objects={'f1-score': F1Score})
     image_size = (model.inputs[0].shape[-3], model.inputs[0].shape[-2])
 
     # build input pipeline
