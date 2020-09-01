@@ -14,7 +14,7 @@ def plot_confusion_matrix(labels, predictions, class_names, save_path=None):
     :param labels: numpy array of shape (n_samples,), ground truth (correct labels)
     :param predictions: numpy array of shape (n_samples,), predictions
     :param class_names: list of class names to use as ticks
-    :param save_path: path where to save the figure
+    :param save_path: path to the directory where to save the figure (with name 'confusion_matrix.png')
     """
     cm = confusion_matrix(labels, predictions)
     cm_normalized = cm / cm.sum(axis=1)
@@ -35,7 +35,7 @@ def plot_roc(labels, probabilities, save_path=None):
 
     :param labels: numpy array of shape (n_samples,), ground truth (correct labels, 1 or 10 or 1)
     :param probabilities: numpy array of shape (n_samples,), probabilities (e.g. softmax activations)
-    :param save_path: path where to save the figure
+    :param save_path: path to the directory where to save the figure (with name 'roc.png')
     """
     fpr, tpr, _ = roc_curve(labels, probabilities)
     roc_auc = auc(fpr, tpr)
@@ -62,7 +62,7 @@ def make_classification_report(labels, predictions, class_names, save_path=None)
     :param labels: numpy array of shape (n_samples,), ground truth (correct labels)
     :param predictions: numpy array of shape (n_samples,), predictions
     :param class_names: list of class names to use as ticks
-    :param save_path: path where to save the figure
+    :param save_path: path to the directory where to save the report (with name 'classification_report.txt')
     """
     save_path = Path(save_path)
     cr = classification_report(labels, predictions, target_names=class_names)

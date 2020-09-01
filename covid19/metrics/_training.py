@@ -7,9 +7,9 @@ def plot_learning_curves(history, history_ft=None, save_path=None):
     Plots the learning curves for all the metrics contained in history (one figure for each metric).
 
     :param history: History object returned by tf.keras.Model.fit()
-    :param save_path: path where to save the figures
     :param history_ft: History object returned by tf.keras.Model.fit() including the fine-tuning epochs. If this
         argument is provided, history must contain the History object of without the fine-tuning epochs.
+    :param save_path: path to the directory where to save the figures (with names '<metric>.png')
     """
     epochs = history.epoch[-1]
 

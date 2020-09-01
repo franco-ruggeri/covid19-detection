@@ -1,15 +1,11 @@
 import argparse
 import numpy as np
 from pathlib import Path
-from covid19.metrics import plot_learning_curves
 from covid19.datasets import image_dataset_from_directory
-from tensorflow.keras import Input, Model
-from tensorflow.keras.layers import Dense
-from tensorflow.keras.applications import ResNet50V2
-from tensorflow.keras.applications.resnet_v2 import preprocess_input
-from tensorflow.keras.optimizers import Adam
+from covid19.metrics import plot_learning_curves
+from covid19.models import ResNet50
 from tensorflow.keras.losses import CategoricalCrossentropy
-from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, TensorBoard
+from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard
 from tensorflow.keras.metrics import CategoricalAccuracy, AUC, Precision, Recall
 from tensorflow_addons.metrics import F1Score
 
@@ -23,15 +19,6 @@ FINE_TUNE_AT = 150          # layer at which to start fine-tuning (layers [0, fi
 IMAGE_SIZE = (224, 224)
 INPUT_SHAPE = IMAGE_SIZE + (3,)
 VERBOSE = 2
-
-
-def make_model(n_classes):
-    feature_extractor = ResNet50V2(include_top=False, pooling='avg', input_shape=INPUT_SHAPE)
-    inputs = Input(shape=INPUT_SHAPE)
-    x = preprocess_input(inputs)
-    x = feature_extractor(x, training=False)                # training=False to keep BN layers in inference mode
-    outputs = Dense(n_classes, activation='softmax')(x)     # softmax necessary for AUC metric
-    return Model(inputs=inputs, outputs=outputs, name='covidnet')
 
 
 def get_loss():
@@ -51,11 +38,10 @@ def get_metrics(n_classes, covid19_label):
     ]
 
 
-def get_callbacks(model_path, logs_path):
-    filepath_checkpoint = str(model_path.with_name(model_path.stem + '{epoch:02d}-{val_loss:.2f}' + model_path.suffix))
+def get_callbacks(checkpoints_path, logs_path):
+    filepath_checkpoint = checkpoints_path / '{epoch:02d}-{val_auc:.2f}'
     return [
-        ModelCheckpoint(filepath=filepath_checkpoint, verbose=VERBOSE),
-        EarlyStopping(monitor='val_auc', mode='max', patience=5, restore_best_weights=True, verbose=VERBOSE),
+        ModelCheckpoint(filepath=str(filepath_checkpoint), save_weights_only=True, verbose=VERBOSE),
         TensorBoard(log_dir=logs_path, profile_batch=0)
     ]
 
@@ -71,23 +57,6 @@ def get_class_weights(train_ds):
         n = len(np.where(train_ds.classes == class_label)[0])
         class_weights[class_label] = (1 / n) * (total / n_classes)
     return class_weights
-
-
-def train(model, train_ds, val_ds, learning_rate, epochs, initial_epoch, loss, metrics, callbacks, class_weights,
-          fine_tune=False):
-    # set trainable layers
-    feature_extractor = model.layers[-2]
-    feature_extractor.trainable = False
-    if fine_tune:
-        feature_extractor.trainable = True      # unfreeze convolutional base
-        for layer in feature_extractor.layers[:FINE_TUNE_AT]:
-            layer.trainable = False             # freeze bottom layers
-
-    # compile and fit
-    model.compile(optimizer=Adam(lr=learning_rate), loss=loss, metrics=metrics)
-    model.summary()
-    return model.fit(train_ds, epochs=epochs+initial_epoch, initial_epoch=initial_epoch, validation_data=val_ds,
-                     callbacks=callbacks, class_weight=class_weights)
 
 
 def main():
@@ -107,8 +76,11 @@ def main():
         raise FileExistsError(str(model_path) + ' already exists')
     model_path.mkdir(parents=True)
     logs_path = model_path / 'logs'
+    checkpoints_path = model_path / 'checkpoints'
     plots_path = model_path / 'training'
-    model_path = model_path / 'model.h5'
+    model_path_no_ft = model_path / 'model_no_ft'
+    model_path = model_path / 'model'
+    checkpoints_path.mkdir()
     plots_path.mkdir()
 
     # build input pipeline
@@ -119,17 +91,17 @@ def main():
     class_weights = get_class_weights(train_ds) if args.class_weights else None
 
     # compose model
-    model = make_model(n_classes)
+    model = ResNet50()
 
-    # train top layer and fine-tune
+    # train classifier (top dense layers) and fine-tune
     loss = get_loss()
     metrics = get_metrics(n_classes, covid19_label)
-    callbacks = get_callbacks(model_path, logs_path)
-    history = train(model, train_ds, val_ds, LR, EPOCHS, 0, loss, metrics, callbacks, class_weights)
-    model.save(model_path.with_name(model_path.stem + '_no_finetuning' + model_path.suffix))
-    history_ft = train(model, train_ds, val_ds, LR_FT, EPOCHS_FT, history.epoch[-1] + 1, loss, metrics, callbacks,
-                       class_weights, fine_tune=True)
-    model.save(model_path)
+    callbacks = get_callbacks(checkpoints_path, logs_path)
+    history = model.fit_classifier(LR, loss, metrics, train_ds, val_ds, EPOCHS, 0, callbacks, class_weights)
+    model.save_weights(str(model_path_no_ft), save_format='tf')
+    history_ft = model.fine_tune(LR_FT, loss, metrics, train_ds, val_ds, EPOCHS_FT, history.epoch[-1]+1, callbacks,
+                                 FINE_TUNE_AT, class_weights)
+    model.save_weights(str(model_path), save_format='tf')
     plot_learning_curves(history, history_ft, save_path=plots_path)
 
 
@@ -137,11 +109,11 @@ if __name__ == '__main__':
     main()
 
 
+# TODO: TESTA FINE-TUNING SE SBLOCCA I PARAMETRI
+
+
 # TODO: run with and without class weights, confusion matrix should improve
 # TODO: add data augmentation -> over-fitting should be reduced (i.e. test accuracy should improve)
 # TODO: add grad-cam
 # TODO: add COVID-Net and train the 3 models as resnet50
 # TODO: add histogram for dataset
-
-# TODO: se ottengo risultati di merda puo' essere che la pipeline nuova e' sbagliata
-# TODO: subclass models to have a simple fit() method including fine-tuning, so that the package is easily usable
