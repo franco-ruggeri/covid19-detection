@@ -108,12 +108,7 @@ def main():
 if __name__ == '__main__':
     main()
 
-
-# TODO: TESTA FINE-TUNING SE SBLOCCA I PARAMETRI
-
-
 # TODO: run with and without class weights, confusion matrix should improve
 # TODO: add data augmentation -> over-fitting should be reduced (i.e. test accuracy should improve)
-# TODO: add grad-cam
-# TODO: add COVID-Net and train the 3 models as resnet50
+# TODO: add COVID-Net
 # TODO: add histogram for dataset
