@@ -29,32 +29,38 @@ class GradCAM:
         outputs = x
         self.classifier = Model(inputs=inputs, outputs=outputs)
 
-    def _make_heatmap(self, image):
-        image = tf.expand_dims(image, axis=0)   # add batch dimension
+    def _predict(self, image):
+        image = tf.expand_dims(image, axis=0)  # add batch dimension
 
         with tf.GradientTape() as tape:
             last_conv_activations = self.conv_base(image)
             tape.watch(last_conv_activations)
             probabilities = self.classifier(last_conv_activations)
-            prediction = tf.argmax(probabilities[0])
+            prediction = tf.argmax(probabilities[0]).numpy()
             top_probability = probabilities[:, prediction]
 
-        grads = tape.gradient(top_probability, last_conv_activations)
-        pooled_grads = tf.reduce_mean(grads, axis=(0, 1, 2))
+        gradients = tape.gradient(top_probability, last_conv_activations)
+        return prediction, last_conv_activations, gradients
 
+    @staticmethod
+    def _make_heatmap(last_conv_activations, gradients):
+        pooled_grads = tf.reduce_mean(gradients, axis=(0, 1, 2))
         last_conv_activations = last_conv_activations.numpy()[0]
         pooled_grads = pooled_grads.numpy()
         for i in range(pooled_grads.shape[-1]):
             last_conv_activations[:, :, i] *= pooled_grads[i]
 
         heatmap = np.mean(last_conv_activations, axis=-1)
-        heatmap = np.maximum(heatmap, 0) / np.max(heatmap)      # range [0, 1]
+        heatmap = np.maximum(heatmap, 0) / np.max(heatmap)              # range [0, 1]
         return heatmap
 
-    def explain(self, image, save_path=None):
+    def explain(self, image):
+        # predict
+        prediction, last_conv_activations, gradients = self._predict(image)
+
         # compute heatmap
-        heatmap = self._make_heatmap(image)                     # range [0, 1]
-        heatmap = np.uint8(255 * heatmap)                       # range [0, 255] (for colormap)
+        heatmap = self._make_heatmap(last_conv_activations, gradients)  # range [0, 1]
+        heatmap = np.uint8(255 * heatmap)                               # range [0, 255] (for colormap)
 
         # colorize new image according to heatmap (with colormap 'jet')
         jet = cm.get_cmap("jet")
@@ -66,11 +72,5 @@ class GradCAM:
 
         # superimposed image
         superimposed_image = jet_heatmap * 0.4 + image
-        superimposed_image /= np.max(superimposed_image)        # range [0, 1] (for plt.imshow())
-
-        # save and show
-        plt.figure()
-        plt.imshow(superimposed_image)
-        if save_path is not None:
-            plt.savefig(save_path)
-        plt.show()
+        superimposed_image /= np.max(superimposed_image)    # range [0, 1] (for plt.imshow())
+        return prediction, superimposed_image
