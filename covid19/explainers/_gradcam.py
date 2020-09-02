@@ -23,10 +23,7 @@ class GradCAM:
 
         # model mapping activations of last conv layer to predictions
         inputs = Input(shape=outputs.shape[1:])
-        x = inputs
-        for layer in model.classifier:
-            x = layer(x)
-        outputs = x
+        outputs = model.classifier(inputs)
         self.classifier = Model(inputs=inputs, outputs=outputs)
 
     def _predict(self, image):
