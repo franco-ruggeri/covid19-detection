@@ -16,8 +16,7 @@ EPOCHS = 30
 EPOCHS_FT = 10              # epochs for fine-tuning
 FINE_TUNE_AT = 150          # layer at which to start fine-tuning (layers [0, fine_tune_at-1] are frozen)
 
-IMAGE_SIZE = (224, 224)
-INPUT_SHAPE = IMAGE_SIZE + (3,)
+IMAGE_SHAPE = (224, 224, 3)
 VERBOSE = 2
 
 
@@ -25,10 +24,12 @@ def get_loss():
     return CategoricalCrossentropy()
 
 
-def get_metrics(n_classes, covid19_label):
+def get_metrics(dataset_info):
     # remarks:
     # - AUC and F1-score are computed with macro-average (we care a lot about the small COVID-19 class!)
     # - precision and recall are computed only on the COVID-19 class (again, it is the most important)
+    n_classes = dataset_info['n_classes']
+    covid19_label = dataset_info['class_labels']['covid-19']
     return [
         CategoricalAccuracy(name='accuracy'),
         AUC(name='auc', multi_label=True),  # multi_label=True => macro-average
@@ -42,20 +43,20 @@ def get_callbacks(checkpoints_path, logs_path):
     filepath_checkpoint = checkpoints_path / 'epoch_{epoch:02d}'
     return [
         ModelCheckpoint(filepath=str(filepath_checkpoint), save_weights_only=True, verbose=VERBOSE),
-        EarlyStopping(patience=2, restore_best_weights=True, verbose=VERBOSE),
+        EarlyStopping(patience=5, restore_best_weights=True, verbose=VERBOSE),
         TensorBoard(log_dir=logs_path, profile_batch=0)
     ]
 
 
-def get_class_weights(train_ds):
-    total = train_ds.classes.shape[0]
-    n_classes = len(train_ds.class_indices)
+def get_class_weights(train_ds, train_ds_info):
+    total = train_ds_info['n_images']
+    n_classes = train_ds['n_classes']
     class_weights = {}
 
-    for class_name, class_label in train_ds.class_indices.items():
+    for class_name, class_label in train_ds_info['class_labels'].items():
         # scale weights by total / n_classes to keep the loss to a similar magnitude
         # see https://www.tensorflow.org/tutorials/structured_data/imbalanced_data#class_weights
-        n = len(np.where(train_ds.classes == class_label)[0])
+        n = len(np.where(train_ds.labels == class_label)[0])
         class_weights[class_label] = (1 / n) * (total / n_classes)
     return class_weights
 
@@ -66,8 +67,9 @@ def main():
     parser.add_argument('data', type=str, help='Path to COVIDx dataset')
     parser.add_argument('model', type=str, help='Path where to save trained model, checkpoints and logs. Must be a '
                                                 'non-existing directory.')
-    parser.add_argument('--class-weights', action='store_true', default=False,
-                        help='Use class weights to compensate the dataset imbalance.')
+    parser.add_argument('--class-weights', action='store_true', default=False, help='Use class weights to compensate '
+                                                                                    'the dataset imbalance.')
+    parser.add_argument('--data-augmentation', action='store_true', default=False, help='Augment data during training')
     args = parser.parse_args()
 
     # prepare paths
@@ -84,19 +86,18 @@ def main():
     plots_path.mkdir()
 
     # build input pipeline
-    train_ds = image_dataset_from_directory(dataset_path / 'train', IMAGE_SIZE)
-    val_ds = image_dataset_from_directory(dataset_path / 'validation', IMAGE_SIZE, shuffle=False)
-    n_classes = len(train_ds.class_indices)
-    covid19_label = train_ds.class_indices['covid-19']
+    train_ds, train_ds_info = image_dataset_from_directory(dataset_path / 'train', IMAGE_SHAPE[0:2],
+                                                           augmentation=args.data_augmentation)
+    val_ds, _ = image_dataset_from_directory(dataset_path / 'validation', IMAGE_SHAPE[0:2], shuffle=False)
+
+    # prepare training stuff
+    loss = get_loss()
+    metrics = get_metrics(train_ds_info)
+    callbacks = get_callbacks(checkpoints_path, logs_path)
     class_weights = get_class_weights(train_ds) if args.class_weights else None
 
-    # compose model
+    # train model
     model = ResNet50()
-
-    # train classifier (top dense layers) and fine-tune
-    loss = get_loss()
-    metrics = get_metrics(n_classes, covid19_label)
-    callbacks = get_callbacks(checkpoints_path, logs_path)
     history = model.fit_classifier(LR, loss, metrics, train_ds, val_ds, EPOCHS, 0, callbacks, class_weights)
     model.save_weights(str(models_path / 'model_no_ft'))
     history_ft = model.fine_tune(LR_FT, loss, metrics, train_ds, val_ds, EPOCHS_FT, history.epoch[-1]+1, callbacks,
@@ -110,13 +111,10 @@ if __name__ == '__main__':
 
 
 # TODO (tests):
-#   1) run with and without class weights, confusion matrix should improve, select the best to continue ~~~
-#   2) does it over-fit? if so, add data augmentation, otherwise skip
-#   3) run from scratch (without pre-trained weights), should over-fit (remember to set training=True!!!)
-#   4) run without pre-trained weights but with data augmentation, over-fitting should decrease
+#   1) with vs without class weights -> class weights gives better confusion matrix, continue using it
+#   2) fine-tune better (smaller learning rate and less layers)
+#   3) class weights + data augmentation, does the generalization improve? if so, continue using it
+#   4) class weights + no pre-training [+ data augmentation], should be worse than pre-trained
 
 # TODO (code):
-#   2) fix COVID-Net
-#   3) support for training from scratch vs pre-trained weights
-#   4) add data augmentation
-#   5) add histogram for dataset
+#   1) fix COVID-Net

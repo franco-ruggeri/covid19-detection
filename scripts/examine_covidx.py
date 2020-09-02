@@ -46,9 +46,9 @@ def write_stats(stats, class_names, save_path):
 def plot_stats(stats, class_names, save_path):
     x = np.arange(len(class_names))
     plt.figure()
-    plt.bar(x, stats['training'][0], width=.25, label='training')
-    plt.bar(x + .25, stats['validation'][0], width=.25, tick_label=class_names, label='validation')
-    plt.bar(x + .5, stats['test'][0], width=.25, label='test')
+    plt.bar(x, stats['training'][0], width=0.25, label='training')
+    plt.bar(x + 0.25, stats['validation'][0], width=0.25, tick_label=class_names, label='validation')
+    plt.bar(x + 0.5, stats['test'][0], width=0.25, label='test')
     plt.ylabel('number of images')
     plt.legend(loc='upper left')
     plt.savefig(save_path / 'dataset.png')
