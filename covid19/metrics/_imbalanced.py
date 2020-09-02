@@ -17,7 +17,8 @@ def plot_confusion_matrix(labels, predictions, class_names, save_path=None):
     :param save_path: path to the directory where to save the figure (with name 'confusion_matrix.png')
     """
     cm = confusion_matrix(labels, predictions)
-    cm_normalized = cm / cm.sum(axis=1)
+    cm_normalized = cm / cm.sum(axis=1).reshape(-1, 1)
+
     plt.figure()
     sns.heatmap(cm_normalized, annot=cm, fmt="d", xticklabels=class_names, yticklabels=class_names, cmap='Reds')
     plt.ylabel('Ground truth')
