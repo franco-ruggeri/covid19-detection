@@ -64,7 +64,7 @@ def main():
     # command-line arguments
     parser = argparse.ArgumentParser(description='Train COVID-19 classifier.')
     parser.add_argument('data', type=str, help='Path to COVIDx dataset')
-    parser.add_argument('model', type=str, help='Path where to save the trained model and the logs. Must be a '
+    parser.add_argument('model', type=str, help='Path where to save trained model, checkpoints and logs. Must be a '
                                                 'non-existing directory.')
     parser.add_argument('--class-weights', action='store_true', default=False,
                         help='Use class weights to compensate the dataset imbalance.')
