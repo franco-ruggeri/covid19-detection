@@ -25,7 +25,7 @@ def plot_confusion_matrix(labels, predictions, class_names, save_path=None):
     if save_path is not None:
         save_path = Path(save_path)
         plt.savefig(save_path / 'confusion_matrix.png')
-    plt.show()
+    plt.close()
 
 
 def plot_roc(labels, probabilities, save_path=None):
@@ -52,7 +52,7 @@ def plot_roc(labels, probabilities, save_path=None):
     if save_path is not None:
         save_path = Path(save_path)
         plt.savefig(save_path / 'roc.png')
-    plt.show()
+    plt.close()
 
 
 def make_classification_report(labels, predictions, class_names, save_path=None):

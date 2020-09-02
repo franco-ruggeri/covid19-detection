@@ -35,4 +35,4 @@ def plot_learning_curves(history, history_ft=None, save_path=None):
         if save_path is not None:
             save_path = Path(save_path)
             plt.savefig(save_path / (metric + '.png'))
-        plt.show()
+        plt.close()

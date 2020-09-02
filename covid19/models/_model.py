@@ -22,30 +22,6 @@ class Model(tf.keras.Model, ABC):
     def __init__(self, **kwargs):
         super().__init__(kwargs)
 
-    @abstractmethod
-    def call(self, inputs, training=None, mask=None):
-        pass
-
-    @property
-    @abstractmethod
-    def preprocess(self):
-        pass
-
-    @property
-    @abstractmethod
-    def feature_extractor(self):
-        pass
-
-    @property
-    @abstractmethod
-    def classifier(self):
-        pass
-
-    @property
-    @abstractmethod
-    def image_shape(self):
-        pass
-
     def _compile_and_fit(self, learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks,
                          class_weights):
         self.compile(optimizer=Adam(lr=learning_rate), loss=loss, metrics=metrics)
@@ -69,3 +45,27 @@ class Model(tf.keras.Model, ABC):
 
     def get_config(self):
         super().get_config()
+
+    @abstractmethod
+    def call(self, inputs, training=None, mask=None):
+        pass
+
+    @property
+    @abstractmethod
+    def preprocess(self):
+        pass
+
+    @property
+    @abstractmethod
+    def feature_extractor(self):
+        pass
+
+    @property
+    @abstractmethod
+    def classifier(self):
+        pass
+
+    @property
+    @abstractmethod
+    def image_shape(self):
+        pass

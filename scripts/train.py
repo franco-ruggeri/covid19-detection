@@ -12,7 +12,7 @@ from tensorflow_addons.metrics import F1Score
 # training settings
 LR = 0.0001
 LR_FT = LR / 10             # learning rate for fine-tuning
-EPOCHS = 20
+EPOCHS = 30
 EPOCHS_FT = 10              # epochs for fine-tuning
 FINE_TUNE_AT = 150          # layer at which to start fine-tuning (layers [0, fine_tune_at-1] are frozen)
 
@@ -39,10 +39,10 @@ def get_metrics(n_classes, covid19_label):
 
 
 def get_callbacks(checkpoints_path, logs_path):
-    filepath_checkpoint = checkpoints_path / '{epoch:02d}.h5'
+    filepath_checkpoint = checkpoints_path / 'epoch_{epoch:02d}'
     return [
         ModelCheckpoint(filepath=str(filepath_checkpoint), save_weights_only=True, verbose=VERBOSE),
-        EarlyStopping(monitor='loss', mode='min', patience=5, restore_best_weights=True, verbose=VERBOSE),
+        EarlyStopping(patience=2, restore_best_weights=True, verbose=VERBOSE),
         TensorBoard(log_dir=logs_path, profile_batch=0)
     ]
 
@@ -62,7 +62,7 @@ def get_class_weights(train_ds):
 
 def main():
     # command-line arguments
-    parser = argparse.ArgumentParser(description='Train classifier on COVIDx dataset.')
+    parser = argparse.ArgumentParser(description='Train COVID-19 classifier.')
     parser.add_argument('data', type=str, help='Path to COVIDx dataset')
     parser.add_argument('model', type=str, help='Path where to save the trained model and the logs. Must be a '
                                                 'non-existing directory.')
@@ -72,15 +72,14 @@ def main():
 
     # prepare paths
     dataset_path = Path(args.data)
-    model_path = Path(args.model)
-    if model_path.is_dir():
-        raise FileExistsError(str(model_path) + ' already exists')
-    model_path.mkdir(parents=True)
-    logs_path = model_path / 'logs'
-    checkpoints_path = model_path / 'checkpoints'
-    plots_path = model_path / 'training'
-    model_path_no_ft = model_path / 'model_no_ft.h5'
-    model_path = model_path / 'model.h5'
+    models_path = Path(args.model)
+    if models_path.is_dir():
+        raise FileExistsError(str(models_path) + ' already exists')
+    logs_path = models_path / 'logs'
+    checkpoints_path = models_path / 'checkpoints'
+    plots_path = models_path / 'training'
+    models_path = models_path / 'models'
+    models_path.mkdir(parents=True)
     checkpoints_path.mkdir()
     plots_path.mkdir()
 
@@ -99,24 +98,24 @@ def main():
     metrics = get_metrics(n_classes, covid19_label)
     callbacks = get_callbacks(checkpoints_path, logs_path)
     history = model.fit_classifier(LR, loss, metrics, train_ds, val_ds, EPOCHS, 0, callbacks, class_weights)
-    model.save_weights(str(model_path_no_ft))
+    model.save_weights(str(models_path / 'model_no_ft'))
     history_ft = model.fine_tune(LR_FT, loss, metrics, train_ds, val_ds, EPOCHS_FT, history.epoch[-1]+1, callbacks,
                                  FINE_TUNE_AT, class_weights)
-    model.save_weights(str(model_path))
+    model.save_weights(str(models_path / 'model_ft'))
     plot_learning_curves(history, history_ft, save_path=plots_path)
 
 
 if __name__ == '__main__':
     main()
 
+
 # TODO (tests):
-#   1) run with and without class weights, confusion matrix should improve, select the best to continue
+#   1) run with and without class weights, confusion matrix should improve, select the best to continue ~~~
 #   2) does it over-fit? if so, add data augmentation, otherwise skip
 #   3) run from scratch (without pre-trained weights), should over-fit (remember to set training=True!!!)
 #   4) run without pre-trained weights but with data augmentation, over-fitting should decrease
 
 # TODO (code):
-#   1) grad-cam script
 #   2) fix COVID-Net
 #   3) support for training from scratch vs pre-trained weights
 #   4) add data augmentation
