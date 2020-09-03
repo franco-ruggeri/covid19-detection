@@ -1,7 +1,8 @@
+import tensorflow as tf
 from covid19.models._model import Model
+from covid19.layers import Rescaling
 from tensorflow.keras import Input, Sequential
 from tensorflow.keras.applications import ResNet50V2
-from tensorflow.keras.applications.resnet_v2 import preprocess_input
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
 
 
@@ -18,8 +19,11 @@ class ResNet50(Model):
         self._image_shape = (224, 224, 3)
         self._from_scratch = weights is None
 
-        self._preprocess = preprocess_input
-        self._feature_extractor = ResNet50V2(include_top=False, weights=weights, input_shape=self.image_shape)
+        self._feature_extractor = Sequential([
+            Rescaling(1./127.5, offset=-1),
+            ResNet50V2(include_top=False, weights=weights, input_shape=self.image_shape)
+        ], name='feature_extractor')
+
         self._classifier = Sequential([
             GlobalAveragePooling2D(),
             Dense(3, activation='softmax')
@@ -32,14 +36,12 @@ class ResNet50(Model):
         self.build(input_shape=(None, self.image_shape[0], self.image_shape[1], self.image_shape[2]))
 
     def call(self, inputs, training=None, mask=None):
-        x = self.preprocess(inputs)
-        x = self.feature_extractor(x, training=self._from_scratch)  # keep BN layers in inference mode if pre-trained
+        # using Rescaling layer, tf.data.Dataset and tf.keras.Model.fit() gives unknown shape, reshaping fixes
+        # see https://gitmemory.com/issue/tensorflow/tensorflow/24520/511633717
+        x = tf.reshape(inputs, tf.constant((-1,) + self.image_shape))
+        x = self.feature_extractor(x, training=self._from_scratch)      # if pre-trained, BN layers in inference mode
         x = self.classifier(x)
         return x
-
-    @property
-    def preprocess(self):
-        return self._preprocess
 
     @property
     def feature_extractor(self):

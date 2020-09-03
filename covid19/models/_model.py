@@ -4,7 +4,14 @@ from tensorflow.keras.optimizers import Adam
 
 
 class Model(tf.keras.Model, ABC):
-    """Abstract Base Class for COVID-19 detection models."""
+    """
+    Abstract Base Class for COVID-19 detection models.
+
+    The subclassing models have to contain only two major blocks of layers:
+    - feature extractor: convolutional base pre-processing inputs and extracting features. It must end with a
+        convolutional layer (required by explainers in covid19.explainers).
+    - classifier: classification model based on dense layers, on top of the convolutional base.
+    """
 
     def __init__(self, **kwargs):
         super().__init__(kwargs)
@@ -69,12 +76,6 @@ class Model(tf.keras.Model, ABC):
 
     @property
     @abstractmethod
-    def preprocess(self):
-        """Pre-processing model (e.g. RandomRotation -> RandomTranslation -> Rescaling)."""
-        pass
-
-    @property
-    @abstractmethod
     def feature_extractor(self):
         """Convolutional model for feature extraction (e.g. tf.keras.applications.ResNet50). Must end with a
         convolutional layer, neither pooling layers nor other layers."""
@@ -89,5 +90,5 @@ class Model(tf.keras.Model, ABC):
     @property
     @abstractmethod
     def image_shape(self):
-        """Shape of the images (height, width, channels). For example, (224,224,3)."""
+        """Shape of the input images (height, width, channels). For example, (224, 224, 3)."""
         pass

@@ -50,13 +50,13 @@ def get_callbacks(checkpoints_path, logs_path):
 
 def get_class_weights(train_ds, train_ds_info):
     total = train_ds_info['n_images']
-    n_classes = train_ds['n_classes']
+    n_classes = train_ds_info['n_classes']
     class_weights = {}
 
     for class_name, class_label in train_ds_info['class_labels'].items():
         # scale weights by total / n_classes to keep the loss to a similar magnitude
         # see https://www.tensorflow.org/tutorials/structured_data/imbalanced_data#class_weights
-        n = len(np.where(train_ds.labels == class_label)[0])
+        n = len(np.where(train_ds_info['labels'] == class_label)[0])
         class_weights[class_label] = (1 / n) * (total / n_classes)
     return class_weights
 
@@ -94,7 +94,7 @@ def main():
     loss = get_loss()
     metrics = get_metrics(train_ds_info)
     callbacks = get_callbacks(checkpoints_path, logs_path)
-    class_weights = get_class_weights(train_ds) if args.class_weights else None
+    class_weights = get_class_weights(train_ds, train_ds_info) if args.class_weights else None
 
     # train model
     model = ResNet50()

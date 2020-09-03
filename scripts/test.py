@@ -1,5 +1,6 @@
 import argparse
 import numpy as np
+import tensorflow as tf
 from tqdm import tqdm
 from pathlib import Path
 from covid19.datasets import image_dataset_from_directory
@@ -13,8 +14,8 @@ VERBOSE = 2
 def evaluate(model, dataset, dataset_info, output_path):
     probabilities = model.predict(dataset, verbose=VERBOSE)
     predictions = np.argmax(probabilities, axis=1)
-    labels_one_hot = np.concatenate([[label for label in batch[1].numpy()] for batch in dataset])
-    labels = np.argmax(labels_one_hot, axis=1)
+    labels = dataset_info['labels']
+    labels_one_hot = tf.one_hot(labels, dataset_info['n_classes'])
 
     class_names = sorted(dataset_info['class_labels'].keys())
     covid19_label = dataset_info['class_labels']['covid-19']
@@ -79,7 +80,7 @@ def main():
     elif args.analysis == 'explainability':
         explain(model, test_ds, test_ds_info, output_path)
     else:
-        raise ValueError('Invalid command')
+        raise ValueError('Invalid analysis')
 
 
 if __name__ == '__main__':

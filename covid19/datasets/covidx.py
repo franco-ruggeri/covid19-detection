@@ -308,6 +308,7 @@ def generate_data(dataset_path, output_path, test_split=.15, validation_split=.1
     :param output_path: path where to put COVIDx dataset
     :param test_split: float, fraction of data to be used as test set (must be between 0 and 1)
     :param validation_split: float, fraction of training data to be used as validation set (must be between 0 and 1)
+    :param seed: seed for random number generator
     """
     if seed is not None:
         np.random.seed(seed)
@@ -323,7 +324,6 @@ def generate_data(dataset_path, output_path, test_split=.15, validation_split=.1
     tmp_path.mkdir()
 
     dataset = []
-    urls = set()
     dataset, urls = _process_dataset_1(dataset, dataset_path / 'covid-chestxray-dataset', tmp_path)
     dataset = _process_dataset_2(dataset, dataset_path / 'Figure1-COVID-chestxray-dataset', tmp_path)
     dataset = _process_dataset_3(dataset, dataset_path / 'Actualmed-COVID-chestxray-dataset', tmp_path)
