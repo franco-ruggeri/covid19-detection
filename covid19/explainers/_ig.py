@@ -1,7 +1,9 @@
 import numpy as np
 import tensorflow as tf
 from scipy import ndimage
- 
+
+
+#source code : https://keras.io/examples/vision/integrated_gradients/
 
 def _apply_polarity(attributions, polarity):
     if polarity == "positive":
@@ -290,6 +292,7 @@ class IG:
     def _visualize(self, image, integrated_gradients, polarity="positive", clip_above_percentile=99.9,
                    clip_below_percentile=0, morphological_cleanup=False, structure=np.ones((3, 3)), outlines=False,
                    outlines_component_percentage=90, overlay=True, figsize=(15, 8)):    # TODO: figsize not used
+     # figsize did not get deleted as the function in tutorial was also plotting the pictures, and as in the code that should call this or GRAD-cam there exists plot explanation function (to save the picture I assume I switched it to just return the processed picture - or at least it should);
         # 1. Make two copies of the original image
         img2 = np.copy(image)
 
