@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
 from scipy import ndimage
-
+ 
 
 def _apply_polarity(attributions, polarity):
     if polarity == "positive":
@@ -323,6 +323,7 @@ class IG:
 
         # 5. Get the gradients of the last layer for the predicted label
         # TODO: ???? comment above and no instructions?
+        # Milan : The instruction was for the normal gradients as I recall, I just deleted the line (considering we dont need those pictures) without deleting the comment from tutorial, my error;
 
         # 6. Get the integrated gradients
         igrads = self._random_baseline_integrated_gradients(np.copy(orig_img), top_pred_idx=top_pred_idx, num_steps=50,
