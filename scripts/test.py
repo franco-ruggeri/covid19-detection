@@ -13,10 +13,10 @@ VERBOSE = 2
 def evaluate(model, dataset, dataset_info, output_path):
     probabilities = model.predict(dataset, verbose=VERBOSE)
     predictions = np.argmax(probabilities, axis=1)
-    labels_one_hot = np.array([label for label in [batch[0] for batch in dataset]])
+    labels_one_hot = np.concatenate([[label for label in batch[1].numpy()] for batch in dataset])
     labels = np.argmax(labels_one_hot, axis=1)
 
-    class_names = sorted(dataset_info['class_names'].keys())
+    class_names = sorted(dataset_info['class_labels'].keys())
     covid19_label = dataset_info['class_labels']['covid-19']
     covid19_probabilities = probabilities[:, covid19_label]
     covid19_binary_labels = labels_one_hot[:, covid19_label]

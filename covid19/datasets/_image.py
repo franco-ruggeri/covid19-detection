@@ -29,6 +29,7 @@ def image_dataset_from_directory(dataset_path, image_size, augmentation=False, s
     image_flow = ImageDataGenerator().flow_from_directory(dataset_path, target_size=image_size, batch_size=BATCH_SIZE,
                                                           shuffle=shuffle)
     n_classes = image_flow.num_classes
+    n_batches = len(image_flow)
 
     # tf.data.Dataset
     dataset = tf.data.Dataset.from_generator(lambda: image_flow, output_types=(tf.float32, tf.float32),
@@ -38,13 +39,14 @@ def image_dataset_from_directory(dataset_path, image_size, augmentation=False, s
         dataset = dataset.map(lambda image, label: (tf.numpy_function(_augment, [image], tf.float32), label),
                               num_parallel_calls=tf.data.experimental.AUTOTUNE)
         dataset = dataset.batch(BATCH_SIZE)
+    dataset = dataset.take(n_batches)
     dataset = dataset.prefetch(tf.data.experimental.AUTOTUNE)
 
     # useful info
     info = {
         'n_classes': n_classes,
         'n_images': image_flow.classes[0],
-        'n_batches': len(image_flow),
+        'n_batches': n_batches,
         'class_labels': image_flow.class_indices,
         'batch_size': BATCH_SIZE
     }
