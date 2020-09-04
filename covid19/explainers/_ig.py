@@ -290,7 +290,7 @@ class IG:
 
         img2 = np.copy(image)
 
-        # 3. Process the integrated gradients
+        # 2. Process the integrated gradients
         igrads_attr = self.process_grads(
             image=img2,
             attributions=integrated_gradients,
@@ -323,11 +323,11 @@ class IG:
         # 2. Keep a copy of the original image
         orig_img = np.copy(img[0]).astype(np.uint8)
 
-        # 4. Get model predictions
+        # 3. Get model predictions
         preds = self.model.predict(img)
         top_pred_idx = tf.argmax(preds[0])
 
-        # 6. Get the integrated gradients
+        # 4. Get the integrated gradients
         igrads = self.random_baseline_integrated_gradients(
             np.copy(orig_img), top_pred_idx=top_pred_idx, num_steps=50, num_runs=2
         )
