@@ -58,8 +58,8 @@ def plot_stats(stats, class_names, save_path):
 def main():
     # command-line arguments
     parser = argparse.ArgumentParser(description='Analysis of COVIDx dataset.')
-    parser.add_argument('data', type=str, help='Path to COVIDx dataset')
-    parser.add_argument('output', type=str, help='Path where to save the dataset stats')
+    parser.add_argument('data', type=str, help='path to COVIDx dataset')
+    parser.add_argument('output', type=str, help='path where to save the dataset stats')
     args = parser.parse_args()
 
     # prepare paths

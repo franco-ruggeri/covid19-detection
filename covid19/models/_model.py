@@ -78,7 +78,7 @@ class Model(tf.keras.Model, ABC):
     @abstractmethod
     def feature_extractor(self):
         """Convolutional model for feature extraction (e.g. tf.keras.applications.ResNet50). Must end with a
-        convolutional layer, neither pooling layers nor other layers."""
+        convolutional layer."""
         pass
 
     @property

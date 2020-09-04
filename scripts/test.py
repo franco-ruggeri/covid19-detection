@@ -35,7 +35,7 @@ def explain(model, dataset, dataset_info, output_path):
     iter_dataset = iter(dataset)
 
     with tqdm(total=n_batches * dataset_info['batch_size']) as bar:
-        bar.set_description('Explaining images in ' + str(output_path))
+        bar.set_description('Explaining images')
 
         for _ in range(n_batches):   # can't directly iterate over dataset, as it iterates forever
             batch = next(iter_dataset)
@@ -54,11 +54,11 @@ def explain(model, dataset, dataset_info, output_path):
 
 def main():
     # command-line arguments
-    parser = argparse.ArgumentParser(description='Test COVID-19 classifier.')
-    parser.add_argument('analysis', type=str, help='Type of evaluation. Support for: performance, explainability.')
-    parser.add_argument('data', type=str, help='Path to COVIDx dataset')
-    parser.add_argument('output', type=str, help='Path where to save the results')
-    parser.add_argument('model', type=str, help='Path to the model')
+    parser = argparse.ArgumentParser(description='Test COVID-19 detection model.')
+    parser.add_argument('analysis', type=str, help='type of evaluation. Supported: performance, explainability.')
+    parser.add_argument('data', type=str, help='path to COVIDx dataset')
+    parser.add_argument('output', type=str, help='path where to save the results')
+    parser.add_argument('model', type=str, help='path to the model')
     args = parser.parse_args()
 
     # prepare paths

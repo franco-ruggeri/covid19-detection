@@ -3,7 +3,7 @@ import numpy as np
 from pathlib import Path
 from covid19.datasets import image_dataset_from_directory
 from covid19.metrics import plot_learning_curves
-from covid19.models import ResNet50
+from covid19.models import ResNet50, COVIDNet
 from tensorflow.keras.losses import CategoricalCrossentropy
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, TensorBoard
 from tensorflow.keras.metrics import CategoricalAccuracy, AUC, Precision, Recall
@@ -18,6 +18,17 @@ FINE_TUNE_AT = 150          # layer at which to start fine-tuning (layers [0, fi
 
 IMAGE_SHAPE = (224, 224, 3)
 VERBOSE = 2
+
+
+def get_model(architecture, weights):
+    if weights == 'None':
+        weights = None
+    if architecture == 'resnet50':
+        return ResNet50(weights=weights)
+    elif architecture == 'covidnet':
+        return COVIDNet(weights=weights)
+    else:
+        raise ValueError('Invalid architecture')
 
 
 def get_loss():
@@ -63,13 +74,17 @@ def get_class_weights(train_ds, train_ds_info):
 
 def main():
     # command-line arguments
-    parser = argparse.ArgumentParser(description='Train COVID-19 classifier.')
-    parser.add_argument('data', type=str, help='Path to COVIDx dataset')
-    parser.add_argument('model', type=str, help='Path where to save trained model, checkpoints and logs. Must be a '
+    parser = argparse.ArgumentParser(description='Train COVID-19 detection model.')
+    parser.add_argument('data', type=str, help='path to COVIDx dataset')
+    parser.add_argument('model', type=str, help='path where to save trained model, checkpoints and logs. Must be a '
                                                 'non-existing directory.')
-    parser.add_argument('--class-weights', action='store_true', default=False, help='Use class weights to compensate '
-                                                                                    'the dataset imbalance.')
-    parser.add_argument('--data-augmentation', action='store_true', default=False, help='Augment data during training')
+    parser.add_argument('--architecture', type=str, default='resnet50', help='architecture to use. Supported: '
+                                                                             'resnet50, covidnet.')
+    parser.add_argument('--weights', type=str, default='imagenet', help='one of None, imagenet, or the path to the '
+                                                                        'weights file to be loaded')
+    parser.add_argument('--class-weights', action='store_true', default=False, help='compensate dataset imbalance using'
+                                                                                    ' class weights')
+    parser.add_argument('--data-augmentation', action='store_true', default=False, help='augment data during training')
     args = parser.parse_args()
 
     # prepare paths
@@ -97,7 +112,7 @@ def main():
     class_weights = get_class_weights(train_ds, train_ds_info) if args.class_weights else None
 
     # train model
-    model = ResNet50()
+    model = get_model(args.architecture, args.weights)
     history = model.fit_classifier(LR, loss, metrics, train_ds, val_ds, EPOCHS, 0, callbacks, class_weights)
     model.save_weights(str(models_path / 'model_no_ft'))
     history_ft = model.fine_tune(LR_FT, loss, metrics, train_ds, val_ds, EPOCHS_FT, history.epoch[-1]+1, callbacks,

@@ -8,10 +8,10 @@ from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
 
 class ResNet50(Model):
     """
-    COVID-19 classifier with ResNet50v2 as convolutional base for feature extraction.
+    COVID-19 detection model with ResNet50v2 as convolutional base for feature extraction.
 
     Inputs: batches of images with shape (None, 224, 224, 3).
-    Outputs: batches of softmax activations (None, 3). The 3 classes are intended to be: covid-19, normal, pneumonia.
+    Outputs: batches of softmax activations (None, 3). The 3 classes are meant to be: covid-19, normal, pneumonia.
     """
 
     def __init__(self, name='resnet50', weights='imagenet'):
@@ -36,7 +36,7 @@ class ResNet50(Model):
         self.build(input_shape=(None, self.image_shape[0], self.image_shape[1], self.image_shape[2]))
 
     def call(self, inputs, training=None, mask=None):
-        # using Rescaling layer, tf.data.Dataset and tf.keras.Model.fit() gives unknown shape, reshaping fixes
+        # using Rescaling layer, tf.data.Dataset and tf.keras.Model.fit() causes unknown shape... reshaping fixes
         # see https://gitmemory.com/issue/tensorflow/tensorflow/24520/511633717
         x = tf.reshape(inputs, tf.constant((-1,) + self.image_shape))
         x = self.feature_extractor(x, training=self._from_scratch)      # if pre-trained, BN layers in inference mode
