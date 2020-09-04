@@ -4,8 +4,7 @@ import tensorflow as tf
 
 from scipy import ndimage
 from tensorflow import keras
-from tensorflow.keras.models import load_model
-from tensorflow.keras.applications.resnet_v2 import preprocess_input, decode_predictions
+from tensorflow.keras.applications.resnet_v2 import preprocess_input
 
 
 # The local path to our target image
