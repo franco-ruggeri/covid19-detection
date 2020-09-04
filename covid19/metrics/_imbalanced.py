@@ -17,7 +17,8 @@ def plot_confusion_matrix(labels, predictions, class_names, save_path=None):
     :param save_path: path to the directory where to save the figure (with name 'confusion_matrix.png')
     """
     cm = confusion_matrix(labels, predictions)
-    cm_normalized = cm / cm.sum(axis=1)
+    cm_normalized = cm / cm.sum(axis=1).reshape(-1, 1)
+
     plt.figure()
     sns.heatmap(cm_normalized, annot=cm, fmt="d", xticklabels=class_names, yticklabels=class_names, cmap='Reds')
     plt.ylabel('Ground truth')
@@ -25,7 +26,7 @@ def plot_confusion_matrix(labels, predictions, class_names, save_path=None):
     if save_path is not None:
         save_path = Path(save_path)
         plt.savefig(save_path / 'confusion_matrix.png')
-    plt.show()
+    plt.close()
 
 
 def plot_roc(labels, probabilities, save_path=None):
@@ -52,7 +53,7 @@ def plot_roc(labels, probabilities, save_path=None):
     if save_path is not None:
         save_path = Path(save_path)
         plt.savefig(save_path / 'roc.png')
-    plt.show()
+    plt.close()
 
 
 def make_classification_report(labels, predictions, class_names, save_path=None):
