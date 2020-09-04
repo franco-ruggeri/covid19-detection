@@ -54,7 +54,8 @@ def explain(model, dataset, dataset_info, output_path):
 
 def main():
     # command-line arguments
-    parser = argparse.ArgumentParser(description='Test COVID-19 detection model.')
+    parser = argparse.ArgumentParser(description='Test COVID-19 detection model.',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('analysis', type=str, help='type of evaluation. Supported: performance, explainability.')
     parser.add_argument('data', type=str, help='path to COVIDx dataset')
     parser.add_argument('output', type=str, help='path where to save the results')

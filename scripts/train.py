@@ -9,13 +9,6 @@ from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping, TensorBoa
 from tensorflow.keras.metrics import CategoricalAccuracy, AUC, Precision, Recall
 from tensorflow_addons.metrics import F1Score
 
-# training settings
-LR = 0.0001
-LR_FT = LR / 10             # learning rate for fine-tuning
-EPOCHS = 30
-EPOCHS_FT = 10              # epochs for fine-tuning
-FINE_TUNE_AT = 150          # layer at which to start fine-tuning (layers [0, fine_tune_at-1] are frozen)
-
 IMAGE_SHAPE = (224, 224, 3)
 VERBOSE = 2
 
@@ -74,7 +67,8 @@ def get_class_weights(train_ds, train_ds_info):
 
 def main():
     # command-line arguments
-    parser = argparse.ArgumentParser(description='Train COVID-19 detection model.')
+    parser = argparse.ArgumentParser(description='Train COVID-19 detection model.',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('data', type=str, help='path to COVIDx dataset')
     parser.add_argument('model', type=str, help='path where to save trained model, checkpoints and logs. Must be a '
                                                 'non-existing directory.')
@@ -85,6 +79,11 @@ def main():
     parser.add_argument('--class-weights', action='store_true', default=False, help='compensate dataset imbalance using'
                                                                                     ' class weights')
     parser.add_argument('--data-augmentation', action='store_true', default=False, help='augment data during training')
+    parser.add_argument('--learning-rate', type=int, default=1e-4, help='learning rate for training classifier on top')
+    parser.add_argument('--learning-rate-ft', type=int, default=1e-6, help='learning rate for fine-tuning')
+    parser.add_argument('--epochs', type=int, default=30, help='epochs of training for classifier on top')
+    parser.add_argument('--epochs-ft', type=int, default=10, help='epochs of fine-tuning')
+    parser.add_argument('--fine-tune-at', type=int, default=0, help='index of layer at which to start to unfreeze')
     args = parser.parse_args()
 
     # prepare paths
@@ -113,10 +112,11 @@ def main():
 
     # train model
     model = get_model(args.architecture, args.weights)
-    history = model.fit_classifier(LR, loss, metrics, train_ds, val_ds, EPOCHS, 0, callbacks, class_weights)
+    history = model.fit_classifier(args.learning_rate, loss, metrics, train_ds, val_ds, args.epochs, 0, callbacks,
+                                   class_weights)
     model.save_weights(str(models_path / 'model_no_ft'))
-    history_ft = model.fine_tune(LR_FT, loss, metrics, train_ds, val_ds, EPOCHS_FT, history.epoch[-1]+1, callbacks,
-                                 FINE_TUNE_AT, class_weights)
+    history_ft = model.fine_tune(args.learning_rate_ft, loss, metrics, train_ds, val_ds, args.epochs_ft,
+                                 history.epoch[-1]+1, callbacks, args.fine_tune_at, class_weights)
     model.save_weights(str(models_path / 'model_ft'))
     plot_learning_curves(history, history_ft, save_path=plots_path)
 
@@ -126,10 +126,14 @@ if __name__ == '__main__':
 
 
 # TODO (tests):
-#   1) with vs without class weights -> class weights gives better confusion matrix, continue using it
-#   2) fine-tune better (smaller learning rate and less layers)
-#   3) class weights + data augmentation, does the generalization improve? if so, continue using it
-#   4) class weights + no pre-training [+ data augmentation], should be worse than pre-trained
+#   1) ResNet50: with vs without class weights -> class weights gives better recall, continue using it
+#   2) ResNet50: class weights + data augmentation -> less over-fitting + more layers fine-tuned, continue using it
+#   3) ResNet50: class weights + data augmentation + from scratch -> worse, pre-training on ImageNet useful
+#   4) COVID-Net: class weights + data augmentation + from scratch
+#   5) COVID-Net: class weights + data augmentation + pre-training on Skin cancer -> better (?), so useful
 
-# TODO (code):
-#   1) fix COVID-Net
+# TODO (plots):
+#   1) ResNet50: class weights vs no class weights (no data augmentation)
+#   2) ResNet50: data augmentation vs no data augmentation (with class weights)
+#   3) ResNet50: pre-training on ImageNet vs from scratch (with class weights + data augmentation)
+#   4) COVID-Net: pre-training on skin cancer vs from scratch (with class weights + data augmentation)

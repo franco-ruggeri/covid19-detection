@@ -46,7 +46,7 @@ class COVIDNet(Model):
     Inputs: batches of images with shape (None, 224, 224, 3).
     Outputs: batches of softmax activations (None, 3). The 3 classes are meant to be: covid-19, normal, pneumonia.
 
-    Since the paper does not give all the details, some choices have been taken according to the state of the art:
+    Since the paper does not provide all the details, some choices have been taken according to the state of the art:
     - Batch normalization and ReLU activation for every convolutional layer (BN before ReLU).
     - Pooling 3x3 with stride 2 at the end of each block (where the dimensionality decreases in the diagram).
     - Inputs rescaled in the range [-1, 1].

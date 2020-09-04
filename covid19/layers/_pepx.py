@@ -11,7 +11,7 @@ class PEPXBlock(Layer):
     - Second-stage Projection: 1x1 convolutions for projecting features back to a lower dimension.
     - Extension: 1x1 convolutions that finally extend channel dimensionality to a higher dimension.
 
-    Since the paper does not give all the details, some choices have been taken according to the state of the art:
+    Since the paper does not provide all the details, some choices have been taken according to the state of the art:
     - Batch normalization and ReLU activation for every convolutional layer (BN before ReLU).
     - Number of filters in projections set to 1/2 of the initial number of channels.
     - Number of filters in expansion set to 3/4 of the initial number of channels.
