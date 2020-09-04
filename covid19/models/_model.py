@@ -23,10 +23,20 @@ class Model(tf.keras.Model, ABC):
         return self.fit(train_ds, epochs=epochs+initial_epoch, initial_epoch=initial_epoch, validation_data=val_ds,
                         callbacks=callbacks, class_weight=class_weights)
 
-    def fit_classifier(self, learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks,
-                       class_weights=None):
+    def get_config(self):
+        super().get_config()
+
+    @abstractmethod
+    def call(self, inputs, training=None, mask=None):
+        """Forward pass."""
+        pass
+
+    @abstractmethod
+    def fit_linear_classifier(self, learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks,
+                              class_weights=None):
         """
-        Fit classifier (i.e. layers on top of the convolutional base), freezing the convolutional base.
+        Fit layer on top, freezing the rest of the network. It has to be used as first step of transfer learning,
+        before fine-tuning.
 
         :param learning_rate: float, learning rate
         :param loss: tf.keras.Loss, loss function for the optimizer
@@ -39,15 +49,13 @@ class Model(tf.keras.Model, ABC):
         :param class_weights: dictionary (label -> weight), class weights to compensate dataset imbalance.
         :return: History object
         """
-        self.feature_extractor.trainable = False
-        return self._compile_and_fit(learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks,
-                                     class_weights)
+        pass
 
+    @abstractmethod
     def fine_tune(self, learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks, fine_tune_at,
                   class_weights=None):
         """
-        Fine-tune some convolutional layers (i.e. fit classifier + some convolutional layers, freezing the rest).
-        The learning rate should be lower than the normal fit.
+        Fine-tune some layers. The learning rate should be lower than the normal fit.
 
         :param learning_rate: float, learning rate
         :param loss: tf.keras.Loss, loss function for the optimizer
@@ -61,17 +69,6 @@ class Model(tf.keras.Model, ABC):
         :param class_weights: dictionary (label -> weight), class weights to compensate dataset imbalance.
         :return: History object
         """
-        self.feature_extractor.trainable = True     # unfreeze convolutional base
-        for layer in self.feature_extractor.layers[:fine_tune_at]:
-            layer.trainable = False                 # freeze bottom layers
-        return self._compile_and_fit(learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks,
-                                     class_weights)
-
-    def get_config(self):
-        super().get_config()
-
-    @abstractmethod
-    def call(self, inputs, training=None, mask=None):
         pass
 
     @property

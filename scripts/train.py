@@ -117,8 +117,8 @@ def main():
 
     # train model
     model = get_model(args.architecture, args.weights, args.load_model)
-    history = model.fit_classifier(args.learning_rate, loss, metrics, train_ds, val_ds, args.epochs, args.initial_epoch,
-                                   callbacks, class_weights)
+    history = model.fit_linear_classifier(args.learning_rate, loss, metrics, train_ds, val_ds, args.epochs,
+                                          args.initial_epoch, callbacks, class_weights)
     model.save_weights(str(models_path / 'model_no_ft'))
     history_ft = model.fine_tune(args.learning_rate_ft, loss, metrics, train_ds, val_ds, args.epochs_ft,
                                  args.initial_epoch + args.epochs, callbacks, args.fine_tune_at, class_weights)
