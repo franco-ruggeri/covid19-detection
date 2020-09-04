@@ -17,9 +17,7 @@ class IG:
         self.positive_channel = [0, 255, 0]
         self.negative_channel = [255, 0, 0]
 
-    def get_img_array(self, img_path, size=(224, 224)):
-        # `img` is a PIL image of size 299x299
-        img = keras.preprocessing.image.load_img(img_path, target_size=size)
+    def get_img_array(self, img):
         # `array` is a float32 Numpy array of shape (299, 299, 3)
         array = keras.preprocessing.image.img_to_array(img)
         # We add a dimension to transform our array into a "batch"
@@ -316,9 +314,9 @@ class IG:
 
         return igrads_attr.astype(np.uint8)
 
-    def explain(self, explainer):
+    def explain(self, image):
         # 1. Convert the image to numpy array
-        img = self.get_img_array(img_path)
+        img = self.get_img_array(image)
 
         # 2. Keep a copy of the original image
         orig_img = np.copy(img[0]).astype(np.uint8)
@@ -342,4 +340,3 @@ class IG:
         )
 
         return top_pred_idx, explanation
-    
