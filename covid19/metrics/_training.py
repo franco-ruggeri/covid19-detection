@@ -8,15 +8,20 @@ def plot_learning_curves(history, history_ft=None, save_path=None):
     Plots the learning curves for all the metrics contained in history (one figure for each metric).
 
     :param history: History object returned by tf.keras.Model.fit()
-    :param history_ft: History object returned by tf.keras.Model.fit() including the fine-tuning epochs. If this
-        argument is provided, history must contain the History object of without the fine-tuning epochs.
+    :param history_ft: History object returned by tf.keras.Model.fit(), including the fine-tuning epochs. If this
+        argument is provided, history must contain the History object without the fine-tuning epochs.
     :param save_path: path to the directory where to save the figures (with names '<metric>.png')
     """
-    epochs = history.epoch[-1] + 1
+    if len(history.epoch) == 0:     # empty history, use only history_ft
+        epochs = 0
+        history = history_ft
+        history_ft = None
+    else:
+        epochs = history.epoch[-1]
 
     for metric in history.history.keys():
         if metric.startswith('val_'):
-            continue    # already taken into account as dual metric of another one
+            continue                # already taken into account as dual metric of another one
 
         val_metric = 'val_' + metric
         train_values = history.history[metric]

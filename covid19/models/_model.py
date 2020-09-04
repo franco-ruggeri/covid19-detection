@@ -20,7 +20,7 @@ class Model(tf.keras.Model, ABC):
                          class_weights):
         self.compile(optimizer=Adam(lr=learning_rate), loss=loss, metrics=metrics)
         self.summary()
-        return self.fit(train_ds, epochs=epochs, initial_epoch=initial_epoch, validation_data=val_ds,
+        return self.fit(train_ds, epochs=epochs+initial_epoch, initial_epoch=initial_epoch, validation_data=val_ds,
                         callbacks=callbacks, class_weight=class_weights)
 
     def fit_classifier(self, learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks,
@@ -64,8 +64,8 @@ class Model(tf.keras.Model, ABC):
         self.feature_extractor.trainable = True     # unfreeze convolutional base
         for layer in self.feature_extractor.layers[:fine_tune_at]:
             layer.trainable = False                 # freeze bottom layers
-        return self._compile_and_fit(learning_rate, loss, metrics, train_ds, val_ds, epochs+initial_epoch,
-                                     initial_epoch, callbacks, class_weights)
+        return self._compile_and_fit(learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks,
+                                     class_weights)
 
     def get_config(self):
         super().get_config()

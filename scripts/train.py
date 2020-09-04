@@ -13,15 +13,19 @@ IMAGE_SHAPE = (224, 224, 3)
 VERBOSE = 2
 
 
-def get_model(architecture, weights):
+def get_model(architecture, weights, model_path):
     if weights == 'None':
         weights = None
     if architecture == 'resnet50':
-        return ResNet50(weights=weights)
+        model = ResNet50(weights=weights)
     elif architecture == 'covidnet':
-        return COVIDNet(weights=weights)
+        model = COVIDNet(weights=weights)
     else:
         raise ValueError('Invalid architecture')
+    if model_path is not None:
+        model.load_weights(model_path)
+        print('Weights loaded.')
+    return model
 
 
 def get_loss():
@@ -47,12 +51,11 @@ def get_callbacks(checkpoints_path, logs_path):
     filepath_checkpoint = checkpoints_path / 'epoch_{epoch:02d}'
     return [
         ModelCheckpoint(filepath=str(filepath_checkpoint), save_weights_only=True, verbose=VERBOSE),
-        EarlyStopping(patience=5, restore_best_weights=True, verbose=VERBOSE),
         TensorBoard(log_dir=logs_path, profile_batch=0)
     ]
 
 
-def get_class_weights(train_ds, train_ds_info):
+def get_class_weights(train_ds_info):
     total = train_ds_info['n_images']
     n_classes = train_ds_info['n_classes']
     class_weights = {}
@@ -79,10 +82,12 @@ def main():
     parser.add_argument('--class-weights', action='store_true', default=False, help='compensate dataset imbalance using'
                                                                                     ' class weights')
     parser.add_argument('--data-augmentation', action='store_true', default=False, help='augment data during training')
-    parser.add_argument('--learning-rate', type=int, default=1e-4, help='learning rate for training classifier on top')
-    parser.add_argument('--learning-rate-ft', type=int, default=1e-6, help='learning rate for fine-tuning')
+    parser.add_argument('--load-model', type=str, default=None, help='path to the model/checkpoint to load')
+    parser.add_argument('--initial-epoch', type=int, default=0, help='initial epochs to skip')
     parser.add_argument('--epochs', type=int, default=30, help='epochs of training for classifier on top')
     parser.add_argument('--epochs-ft', type=int, default=10, help='epochs of fine-tuning')
+    parser.add_argument('--learning-rate', type=int, default=1e-4, help='learning rate for training classifier on top')
+    parser.add_argument('--learning-rate-ft', type=int, default=1e-6, help='learning rate for fine-tuning')
     parser.add_argument('--fine-tune-at', type=int, default=0, help='index of layer at which to start to unfreeze')
     args = parser.parse_args()
 
@@ -108,32 +113,18 @@ def main():
     loss = get_loss()
     metrics = get_metrics(train_ds_info)
     callbacks = get_callbacks(checkpoints_path, logs_path)
-    class_weights = get_class_weights(train_ds, train_ds_info) if args.class_weights else None
+    class_weights = get_class_weights(train_ds_info) if args.class_weights else None
 
     # train model
-    model = get_model(args.architecture, args.weights)
-    history = model.fit_classifier(args.learning_rate, loss, metrics, train_ds, val_ds, args.epochs, 0, callbacks,
-                                   class_weights)
+    model = get_model(args.architecture, args.weights, args.load_model)
+    history = model.fit_classifier(args.learning_rate, loss, metrics, train_ds, val_ds, args.epochs, args.initial_epoch,
+                                   callbacks, class_weights)
     model.save_weights(str(models_path / 'model_no_ft'))
     history_ft = model.fine_tune(args.learning_rate_ft, loss, metrics, train_ds, val_ds, args.epochs_ft,
-                                 history.epoch[-1]+1, callbacks, args.fine_tune_at, class_weights)
+                                 args.initial_epoch + args.epochs, callbacks, args.fine_tune_at, class_weights)
     model.save_weights(str(models_path / 'model_ft'))
     plot_learning_curves(history, history_ft, save_path=plots_path)
 
 
 if __name__ == '__main__':
     main()
-
-
-# TODO (tests):
-#   1) ResNet50: with vs without class weights -> class weights gives better recall, continue using it
-#   2) ResNet50: class weights + data augmentation -> less over-fitting + more layers fine-tuned, continue using it
-#   3) ResNet50: class weights + data augmentation + from scratch -> worse, pre-training on ImageNet useful
-#   4) COVID-Net: class weights + data augmentation + from scratch
-#   5) COVID-Net: class weights + data augmentation + pre-training on Skin cancer -> better (?), so useful
-
-# TODO (plots):
-#   1) ResNet50: class weights vs no class weights (no data augmentation)
-#   2) ResNet50: data augmentation vs no data augmentation (with class weights)
-#   3) ResNet50: pre-training on ImageNet vs from scratch (with class weights + data augmentation)
-#   4) COVID-Net: pre-training on skin cancer vs from scratch (with class weights + data augmentation)

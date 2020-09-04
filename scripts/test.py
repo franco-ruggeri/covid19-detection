@@ -59,18 +59,17 @@ def main():
     parser.add_argument('analysis', type=str, help='type of evaluation. Supported: performance, explainability.')
     parser.add_argument('data', type=str, help='path to COVIDx dataset')
     parser.add_argument('output', type=str, help='path where to save the results')
-    parser.add_argument('model', type=str, help='path to the model')
+    parser.add_argument('model', type=str, help='path to the model/checkpoint to test')
     args = parser.parse_args()
 
     # prepare paths
     dataset_path = Path(args.data) / 'test'
     output_path = Path(args.output)
-    model_path = Path(args.model)
     output_path.mkdir(parents=True, exist_ok=True)
 
     # load model
     model = ResNet50()
-    model.load_weights(str(model_path))
+    model.load_weights(args.model)
 
     # build input pipeline
     test_ds, test_ds_info = image_dataset_from_directory(dataset_path, model.image_shape[0:2], shuffle=False)
