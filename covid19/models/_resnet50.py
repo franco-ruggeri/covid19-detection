@@ -36,10 +36,13 @@ class ResNet50(Model):
         self.build(input_shape=(None, self.image_shape[0], self.image_shape[1], self.image_shape[2]))
 
     def call(self, inputs, training=None, mask=None):
-        # using Rescaling layer, tf.data.Dataset and tf.keras.Model.fit() causes unknown shape... reshaping fixes
-        # see https://gitmemory.com/issue/tensorflow/tensorflow/24520/511633717
+        # remarks:
+        # - using Rescaling layer, tf.data.Dataset and tf.keras.Model.fit() causes unknown shape... reshaping fixes
+        #   see https://gitmemory.com/issue/tensorflow/tensorflow/24520/511633717
+        # - if we are using pre-trained weights (self._from_scratch=True), BN layers must be kept in inference mode
+        #   see https://www.tensorflow.org/tutorials/images/transfer_learning
         x = tf.reshape(inputs, tf.constant((-1,) + self.image_shape))
-        x = self.feature_extractor(x, training=self._from_scratch)      # if pre-trained, BN layers in inference mode
+        x = self.feature_extractor(x, training=False if self._from_scratch else training)
         x = self.classifier(x)
         return x
 
