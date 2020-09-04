@@ -3,11 +3,7 @@ import matplotlib.pyplot as plt
 import tensorflow as tf
 
 from scipy import ndimage
-from evaluate import plot_explanation
-from IPython.display import Image
-from tqdm import tqdm
 from tensorflow import keras
-from tensorflow.keras import layers
 from tensorflow.keras.models import load_model
 from tensorflow.keras.applications.resnet_v2 import preprocess_input, decode_predictions
 
