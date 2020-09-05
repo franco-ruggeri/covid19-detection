@@ -78,7 +78,7 @@ def main():
     parser.add_argument('--data-augmentation', action='store_true', default=False, help='augment data during training')
     parser.add_argument('--initial-epoch', type=int, default=0, help='initial epochs to skip')
     parser.add_argument('--epochs', type=int, default=30, help='epochs of training for classifier on top')
-    parser.add_argument('--learning-rate', type=int, default=1e-4, help='learning rate for training classifier on top')
+    parser.add_argument('--learning-rate', type=float, default=1e-4, help='learning rate for training classifier on top')
     args = parser.parse_args()
 
     # prepare paths

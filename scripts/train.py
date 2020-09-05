@@ -81,8 +81,8 @@ def main():
     parser.add_argument('--initial-epoch', type=int, default=0, help='initial epochs to skip')
     parser.add_argument('--epochs', type=int, default=30, help='epochs of training for classifier on top')
     parser.add_argument('--epochs-ft', type=int, default=10, help='epochs of fine-tuning')
-    parser.add_argument('--learning-rate', type=int, default=1e-4, help='learning rate for training classifier on top')
-    parser.add_argument('--learning-rate-ft', type=int, default=1e-6, help='learning rate for fine-tuning')
+    parser.add_argument('--learning-rate', type=float, default=1e-4, help='learning rate for training classifier on top')
+    parser.add_argument('--learning-rate-ft', type=float, default=1e-6, help='learning rate for fine-tuning')
     parser.add_argument('--fine-tune-at', type=int, default=0, help='index of layer at which to start to unfreeze')
     args = parser.parse_args()
 
