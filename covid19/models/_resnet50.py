@@ -1,7 +1,7 @@
 import tensorflow as tf
 from covid19.models._model import Model
 from covid19.layers import Rescaling
-from tensorflow.keras import Sequential
+from tensorflow.keras import Sequential, Input
 from tensorflow.keras.applications import ResNet50V2
 from tensorflow.keras.layers import Dense, GlobalAveragePooling2D
 
@@ -45,6 +45,10 @@ class ResNet50(Model):
         if load:
             self.load_weights(weights)
 
+        # required for summary()
+        inputs = Input(shape=self.image_shape)
+        outputs = self.call(inputs)
+        super().__init__(name=name, inputs=inputs, outputs=outputs)
         self.build(input_shape=(None, self.image_shape[0], self.image_shape[1], self.image_shape[2]))
 
     def call(self, inputs, training=None, mask=None):

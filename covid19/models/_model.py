@@ -13,6 +13,9 @@ class Model(tf.keras.Model, ABC):
     - classifier: classification model based on dense layers, on top of the convolutional base.
     """
 
+    def __init__(self, **kwargs):
+        super().__init__(kwargs)
+
     def compile_and_fit(self, learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks,
                         class_weights):
         """
