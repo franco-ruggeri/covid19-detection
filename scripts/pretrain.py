@@ -14,17 +14,14 @@ VERBOSE = 2
 IMAGE_SIZE = (224, 224)
 
 
-def get_model(architecture, model_path, dataset_info):
+def get_model(architecture, weights, dataset_info):
     n_classes = dataset_info['n_classes']
     if architecture == 'resnet50':
-        model = ResNet50(n_classes, weights=None)
+        model = ResNet50(n_classes, weights=weights)
     elif architecture == 'covidnet':
-        model = COVIDNet(n_classes, weights=None)
+        model = COVIDNet(n_classes, weights=weights)
     else:
         raise ValueError('Invalid architecture')
-    if model_path is not None:
-        model.load_weights(model_path)
-        print('Weights loaded.')
     return model
 
 
@@ -74,10 +71,11 @@ def main():
                                                 'non-existing directory.')
     parser.add_argument('--architecture', type=str, default='resnet50', help='architecture to use. Supported: '
                                                                              'resnet50, covidnet.')
+    parser.add_argument('--weights', type=str, default=None, help='one of `imagenet` or path to the weights file to be '
+                                                                  'loaded')
     parser.add_argument('--class-weights', action='store_true', default=False, help='compensate dataset imbalance using'
                                                                                     ' class weights')
     parser.add_argument('--data-augmentation', action='store_true', default=False, help='augment data during training')
-    parser.add_argument('--load-model', type=str, default=None, help='path to the model/checkpoint to load')
     parser.add_argument('--initial-epoch', type=int, default=0, help='initial epochs to skip')
     parser.add_argument('--epochs', type=int, default=30, help='epochs of training for classifier on top')
     parser.add_argument('--learning-rate', type=int, default=1e-4, help='learning rate for training classifier on top')
@@ -108,9 +106,10 @@ def main():
     class_weights = get_class_weights(train_ds_info) if args.class_weights else None
 
     # train whole model from scratch
-    model = get_model(args.architecture, args.load_model, train_ds_info)
+    model = get_model(args.architecture, args.weights, train_ds_info)
     history = model.compile_and_fit(args.learning_rate, loss, metrics, train_ds, val_ds, args.epochs,
                                     args.initial_epoch, callbacks, class_weights)
+    model.save_weights(str(models_path / 'model'))
     plot_learning_curves(history, save_path=plots_path)
 
     # replace last layer (so that the weights can be loaded for COVID-19 detection) and save
