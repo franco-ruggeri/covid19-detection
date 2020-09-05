@@ -7,7 +7,7 @@ from covid19.models import ResNet50, COVIDNet
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.losses import CategoricalCrossentropy
 from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard
-from tensorflow.keras.metrics import CategoricalAccuracy, AUC
+from tensorflow.keras.metrics import CategoricalAccuracy, AUC, Precision, Recall
 from tensorflow_addons.metrics import F1Score
 
 VERBOSE = 2
@@ -59,11 +59,16 @@ def get_metrics(dataset_info):
     # - AUC and F1-score are computed with macro-average (we care a lot about the small COVID-19 class!)
     # - precision and recall are computed only on the COVID-19 class (again, it is the most important)
     n_classes = dataset_info['n_classes']
-    return [
+    metrics = [
         CategoricalAccuracy(name='accuracy'),
         AUC(name='auc', multi_label=True),      # multi_label=True => macro-average
         F1Score(name='f1-score', num_classes=n_classes, average='macro')
     ]
+    if 'covid-19' in dataset_info['class_labels']:
+        covid19_label = dataset_info['class_labels']['covid-19']
+        metrics.append(Precision(name='precision_covid19', class_id=covid19_label))
+        metrics.append(Recall(name='recall_covid19', class_id=covid19_label))
+    return metrics
 
 
 def get_callbacks(checkpoints_path, logs_path):
