@@ -13,7 +13,33 @@ VERBOSE = 2
 IMAGE_SIZE = (224, 224)
 
 
-def get_model(architecture, weights, dataset_info):
+def get_command_line_arguments():
+    parser = argparse.ArgumentParser(description='Train COVID-19 detection model with transfer learning.',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('data', type=str, help='path to COVIDx dataset')
+    parser.add_argument('model', type=str,
+                        help='path where to save trained model, checkpoints and logs. Must be a non-existing '
+                             'directory.')
+    parser.add_argument('weights', type=str, help='`imagenet` (only for resnet50), or path to the pretrained weights')
+    parser.add_argument('--architecture', type=str, default='resnet50',
+                        help='architecture to use. Supported: resnet50, covidnet.')
+    parser.add_argument('--class-weights', action='store_true', default=False,
+                        help='compensate dataset imbalance using class weights')
+    parser.add_argument('--data-augmentation', action='store_true', default=False, help='augment data during training')
+    parser.add_argument('--initial-epoch', type=int, default=0,
+                        help='initial epochs to skip (useful for resuming training)')
+    parser.add_argument('--load-weights', type=str, default=None,
+                        help='path to weights to be loaded (useful for resuming training)')
+    parser.add_argument('--epochs', type=int, default=30, help='epochs of training for classifier on top')
+    parser.add_argument('--epochs-ft', type=int, default=10, help='epochs of fine-tuning')
+    parser.add_argument('--learning-rate', type=float, default=1e-4,
+                        help='learning rate for training classifier on top')
+    parser.add_argument('--learning-rate-ft', type=float, default=1e-6, help='learning rate for fine-tuning')
+    parser.add_argument('--fine-tune-at', type=int, default=0, help='index of layer at which to start to unfreeze')
+    return parser.parse_args()
+
+
+def get_model(architecture, weights, dataset_info, load_weights):
     n_classes = dataset_info['n_classes']
     if architecture == 'resnet50':
         model = ResNet50(n_classes, weights=weights)
@@ -21,6 +47,8 @@ def get_model(architecture, weights, dataset_info):
         model = COVIDNet(n_classes, weights=weights)
     else:
         raise ValueError('Invalid architecture')
+    if load_weights is not None:
+        model.load_weights(load_weights)
     return model
 
 
@@ -66,25 +94,7 @@ def get_class_weights(train_ds_info):
 
 def main():
     # command-line arguments
-    parser = argparse.ArgumentParser(description='Train COVID-19 detection model with transfer learning.',
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('data', type=str, help='path to COVIDx dataset')
-    parser.add_argument('model', type=str, help='path where to save trained model, checkpoints and logs. Must be a '
-                                                'non-existing directory.')
-    parser.add_argument('--architecture', type=str, default='resnet50', help='architecture to use. Supported: '
-                                                                             'resnet50, covidnet.')
-    parser.add_argument('--weights', type=str, default=None, help='one of `imagenet` or path to the weights file to be '
-                                                                  'loaded')
-    parser.add_argument('--class-weights', action='store_true', default=False, help='compensate dataset imbalance using'
-                                                                                    ' class weights')
-    parser.add_argument('--data-augmentation', action='store_true', default=False, help='augment data during training')
-    parser.add_argument('--initial-epoch', type=int, default=0, help='initial epochs to skip')
-    parser.add_argument('--epochs', type=int, default=30, help='epochs of training for classifier on top')
-    parser.add_argument('--epochs-ft', type=int, default=10, help='epochs of fine-tuning')
-    parser.add_argument('--learning-rate', type=float, default=1e-4, help='learning rate for training classifier on top')
-    parser.add_argument('--learning-rate-ft', type=float, default=1e-6, help='learning rate for fine-tuning')
-    parser.add_argument('--fine-tune-at', type=int, default=0, help='index of layer at which to start to unfreeze')
-    args = parser.parse_args()
+    args = get_command_line_arguments()
 
     # prepare paths
     dataset_path = Path(args.data)
@@ -111,7 +121,7 @@ def main():
     class_weights = get_class_weights(train_ds_info) if args.class_weights else None
 
     # train linear classifier
-    model = get_model(args.architecture, args.weights, train_ds_info)
+    model = get_model(args.architecture, args.weights, train_ds_info, args.load_weights)
     history = model.fit_linear_classifier(args.learning_rate, loss, metrics, train_ds, val_ds, args.epochs,
                                           args.initial_epoch, callbacks, class_weights)
     model.save_weights(str(models_path / 'model_no_ft'))

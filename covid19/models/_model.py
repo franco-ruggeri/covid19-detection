@@ -37,12 +37,20 @@ class Model(tf.keras.Model, ABC):
         return self.fit(train_ds, epochs=epochs+initial_epoch, initial_epoch=initial_epoch, validation_data=val_ds,
                         callbacks=callbacks, class_weight=class_weights)
 
-    @abstractmethod
     def call(self, inputs, training=None, mask=None):
         """Forward pass."""
-        pass
+        # using Rescaling layer, tf.data.Dataset and tf.keras.Model.fit() causes unknown shape... reshaping fixes
+        # see https://gitmemory.com/issue/tensorflow/tensorflow/24520/511633717
+        x = tf.reshape(inputs, tf.constant((-1,) + self.image_shape))
 
-    @abstractmethod
+        # if we are using pretrained weights (self.transfer_learning=True), BN layers must be kept in inference mode
+        # see https://www.tensorflow.org/tutorials/images/transfer_learning
+        training = False if self.transfer_learning else training
+
+        x = self.feature_extractor(x, training=training)
+        x = self.classifier(x, training=training)
+        return x
+
     def get_config(self):
         return super().get_config()
 
@@ -64,7 +72,7 @@ class Model(tf.keras.Model, ABC):
         :param class_weights: dictionary (label -> weight), class weights to compensate dataset imbalance.
         :return: History object
         """
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def fine_tune(self, learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks, fine_tune_at,
@@ -84,23 +92,28 @@ class Model(tf.keras.Model, ABC):
         :param class_weights: dictionary (label -> weight), class weights to compensate dataset imbalance.
         :return: History object
         """
-        pass
+        raise NotImplementedError
 
     @property
     @abstractmethod
     def feature_extractor(self):
         """Convolutional model for feature extraction (e.g. tf.keras.applications.ResNet50). Must end with a
         convolutional layer."""
-        pass
+        raise NotImplementedError
 
     @property
     @abstractmethod
     def classifier(self):
         """Classification model on top of the convolutional base (e.g. Flatten -> Dense)."""
-        pass
+        raise NotImplementedError
 
     @property
     @abstractmethod
     def image_shape(self):
         """Shape of the input images (height, width, channels). For example, (224, 224, 3)."""
-        pass
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def transfer_learning(self):
+        raise NotImplementedError

@@ -1,4 +1,3 @@
-import tensorflow as tf
 from covid19.models._model import Model
 from covid19.layers import Rescaling
 from tensorflow.keras import Sequential, Input
@@ -18,18 +17,18 @@ class ResNet50(Model):
         """
         :param n_classes: int, number of classes (units in the last layer)
         :param name: string, name of the model
-        :param weights: one of 'imagenet', None or path to the weights to load
+        :param weights: one of 'imagenet', or path to the pretrained weights to load
         """
         super().__init__(name=name)
         self._image_shape = (224, 224, 3)
         self._n_classes = n_classes
-        self._from_scratch = weights is None
+        self._transfer_learning = weights is not None
 
         if weights is not None and weights != 'imagenet':   # weights for the whole model
-            load = True
+            load_whole = True
             weights_resnet = None
         else:
-            load = False
+            load_whole = False
             weights_resnet = weights
 
         self._feature_extractor = Sequential([
@@ -42,7 +41,7 @@ class ResNet50(Model):
             Dense(n_classes, activation='softmax')
         ], name='classifier')
 
-        if load:
+        if load_whole:
             self.load_weights(weights)
 
         # required for summary()
@@ -50,17 +49,6 @@ class ResNet50(Model):
         outputs = self.call(inputs)
         super().__init__(name=name, inputs=inputs, outputs=outputs)
         self.build(input_shape=(None, self.image_shape[0], self.image_shape[1], self.image_shape[2]))
-
-    def call(self, inputs, training=None, mask=None):
-        # remarks:
-        # - using Rescaling layer, tf.data.Dataset and tf.keras.Model.fit() causes unknown shape... reshaping fixes
-        #   see https://gitmemory.com/issue/tensorflow/tensorflow/24520/511633717
-        # - if we are using pre-trained weights (self._from_scratch=True), BN layers must be kept in inference mode
-        #   see https://www.tensorflow.org/tutorials/images/transfer_learning
-        x = tf.reshape(inputs, tf.constant((-1,) + self.image_shape))
-        x = self.feature_extractor(x, training=False if self._from_scratch else training)
-        x = self.classifier(x)
-        return x
 
     def get_config(self):
         config = super().get_config()
@@ -94,3 +82,7 @@ class ResNet50(Model):
     @property
     def image_shape(self):
         return self._image_shape
+
+    @property
+    def transfer_learning(self):
+        return self._transfer_learning

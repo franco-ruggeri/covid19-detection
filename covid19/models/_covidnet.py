@@ -1,4 +1,3 @@
-import tensorflow as tf
 from covid19.models._model import Model
 from covid19.layers import Rescaling, PEPXBlock
 from tensorflow.keras import Sequential, Input
@@ -56,12 +55,12 @@ class COVIDNet(Model):
         """
         :param n_classes: int, number of classes (units in the last layer)
         :param name: string, name of the model
-        :param weights: path to the weights to load
+        :param weights: path to the pretrained weights to load
         """
         super().__init__(name=name)
         self._image_shape = (224, 224, 3)
         self._n_classes = n_classes
-        self._from_scratch = weights is None
+        self._transfer_learning = weights is not None
 
         initial_conv = Sequential([
             Conv2D(64, 7, strides=(2, 2), padding='same'),
@@ -93,17 +92,6 @@ class COVIDNet(Model):
         outputs = self.call(inputs)
         super().__init__(name=name, inputs=inputs, outputs=outputs)
         self.build(input_shape=(None, self.image_shape[0], self.image_shape[1], self.image_shape[2]))
-
-    def call(self, inputs, training=None, mask=None):
-        # remarks:
-        # - using Rescaling layer, tf.data.Dataset and tf.keras.Model.fit() causes unknown shape... reshaping fixes
-        #   see https://gitmemory.com/issue/tensorflow/tensorflow/24520/511633717
-        # - if we are using pre-trained weights (self._from_scratch=True), BN layers must be kept in inference mode
-        #   see https://www.tensorflow.org/tutorials/images/transfer_learning
-        x = tf.reshape(inputs, tf.constant((-1,) + self.image_shape))
-        x = self.feature_extractor(x, training=False if self._from_scratch else training)
-        x = self.classifier(x)
-        return x
 
     def get_config(self):
         config = super().get_config()
@@ -157,3 +145,7 @@ class COVIDNet(Model):
     @property
     def image_shape(self):
         return self._image_shape
+
+    @property
+    def transfer_learning(self):
+        return self._transfer_learning
