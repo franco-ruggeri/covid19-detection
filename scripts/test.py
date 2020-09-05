@@ -1,15 +1,12 @@
 import argparse
 import numpy as np
 import tensorflow as tf
-from utils import get_model
+from utils import get_model, VERBOSE, IMAGE_SIZE
 from tqdm import tqdm
 from pathlib import Path
 from covid19.datasets import image_dataset_from_directory
 from covid19.metrics import plot_confusion_matrix, plot_roc, make_classification_report
 from covid19.explainers import GradCAM, plot_explanation
-
-VERBOSE = 2
-IMAGE_SIZE = (224, 224)
 
 
 def evaluate(model, dataset, dataset_info, output_path):

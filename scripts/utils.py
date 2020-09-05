@@ -2,6 +2,9 @@ import numpy as np
 from covid19.models import ResNet50, COVIDNet
 from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard
 
+VERBOSE = 2
+IMAGE_SIZE = (224, 224)
+
 
 def get_model(architecture, weights, dataset_info, load_weights):
     n_classes = dataset_info['n_classes']

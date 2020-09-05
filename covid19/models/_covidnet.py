@@ -20,8 +20,6 @@ class _COVIDNetBlock(Layer):
         for _ in range(n_pepx):
             self._branch_pepx.append(PEPXBlock(channels))
 
-        self._pooling = MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same')
-
     def call(self, inputs, training=None, mask=None):
         branch_conv_output = self._branch_conv(inputs, training=training)
 
@@ -29,8 +27,7 @@ class _COVIDNetBlock(Layer):
         for i in range(len(self._branch_pepx)):
             x = self._branch_pepx[i](x, training=training)
             x = add([x, branch_conv_output])
-
-        return self._pooling(x)
+        return x
 
     def get_config(self):
         config = super().get_config()
@@ -71,9 +68,13 @@ class COVIDNet(Model):
         self._feature_extractor = Sequential([
             Rescaling(1./127.5, offset=-1),
             initial_conv,
+            MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same'),
             _COVIDNetBlock(256, 3),
+            MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same'),
             _COVIDNetBlock(512, 4),
+            MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same'),
             _COVIDNetBlock(1024, 5),
+            MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same'),
             _COVIDNetBlock(2048, 3),
         ], name='feature_extractor')
 

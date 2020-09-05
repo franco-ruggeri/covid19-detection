@@ -1,5 +1,5 @@
 import argparse
-from utils import get_model, get_callbacks, get_class_weights
+from utils import get_model, get_callbacks, get_class_weights, IMAGE_SIZE
 from pathlib import Path
 from covid19.datasets import image_dataset_from_directory
 from covid19.metrics import plot_learning_curves
@@ -7,9 +7,6 @@ from tensorflow.keras.layers import Dense
 from tensorflow.keras.losses import CategoricalCrossentropy
 from tensorflow.keras.metrics import CategoricalAccuracy, AUC, Precision, Recall
 from tensorflow_addons.metrics import F1Score
-
-VERBOSE = 2
-IMAGE_SIZE = (224, 224)
 
 
 def get_command_line_arguments():
