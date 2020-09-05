@@ -1,14 +1,15 @@
 import argparse
 import numpy as np
 import tensorflow as tf
+from utils import get_model
 from tqdm import tqdm
 from pathlib import Path
 from covid19.datasets import image_dataset_from_directory
 from covid19.metrics import plot_confusion_matrix, plot_roc, make_classification_report
-from covid19.models import ResNet50
 from covid19.explainers import GradCAM, plot_explanation
 
 VERBOSE = 2
+IMAGE_SIZE = (224, 224)
 
 
 def evaluate(model, dataset, dataset_info, output_path):
@@ -60,6 +61,7 @@ def main():
     parser.add_argument('data', type=str, help='path to the dataset')
     parser.add_argument('output', type=str, help='path where to save the results')
     parser.add_argument('model', type=str, help='path to the model/checkpoint to test')
+    parser.add_argument('architecture', type=str, help='architecture of the model. Supported: resnet50, covidnet.')
     args = parser.parse_args()
 
     # prepare paths
@@ -67,14 +69,11 @@ def main():
     output_path = Path(args.output)
     output_path.mkdir(parents=True, exist_ok=True)
 
-    # load model
-    model = ResNet50()
-    model.load_weights(args.model)
-
     # build input pipeline
-    test_ds, test_ds_info = image_dataset_from_directory(dataset_path, model.image_shape[0:2], shuffle=False)
+    test_ds, test_ds_info = image_dataset_from_directory(dataset_path, IMAGE_SIZE, shuffle=False)
 
     # evaluate
+    model = get_model(args.architecture, None, test_ds_info, args.model)
     if args.analysis == 'performance':
         evaluate(model, test_ds, test_ds_info, output_path)
     elif args.analysis == 'explainability':
