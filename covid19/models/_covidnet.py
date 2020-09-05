@@ -117,23 +117,24 @@ class COVIDNet(Model):
 
     def fine_tune(self, learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks, fine_tune_at,
                   class_weights=None):
-        n_layers_feature_extractor = len(self.feature_extractor.layers)
-        n_layers_classifier = len(self.classifier.layers)
+        n_layers_feature_extractor = len(self.feature_extractor.layers) - 1     # -1 for rescaling layer
+        n_layers_classifier = len(self.classifier.layers) - 1                   # -1 for linear classifier on top
 
-        if fine_tune_at > n_layers_feature_extractor + n_layers_classifier - 1:
+        if fine_tune_at > n_layers_feature_extractor + n_layers_classifier:
             raise ValueError('Too big fine_tune_at, more than the number of layers')
 
         if fine_tune_at > n_layers_feature_extractor:
             # freeze all the convolutional base + part of the classifier
             self.feature_extractor.trainable = False
-            fine_tune_at -= n_layers_feature_extractor
             self.classifier.trainable = True
+            fine_tune_at -= n_layers_feature_extractor
             for layer in self.classifier.layers[:fine_tune_at]:
                 layer.trainable = False
         else:
             # freeze part of the convolutional base
             self.feature_extractor.trainable = True
-            for layer in self.feature_extractor.layers[:fine_tune_at]:
+            self._classifier.trainable = True
+            for layer in self.feature_extractor.layers[:fine_tune_at+1]:        # +1 for rescaling layer
                 layer.trainable = False
             for layer in self.classifier.layers:
                 layer.trainable = True
