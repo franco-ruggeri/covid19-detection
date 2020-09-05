@@ -5,6 +5,7 @@ import tensorflow as tf
 from scipy import ndimage
 from tensorflow import keras
 from tensorflow.keras.applications.resnet_v2 import preprocess_input
+from tensorflow.keras.preprocessing.image import array_to_img, img_to_array
 
 
 # The local path to our target image
@@ -18,10 +19,10 @@ class IG:
 
     def get_img_array(self, img):
         # `array` is a float32 Numpy array of shape (299, 299, 3)
-        array = keras.preprocessing.image.img_to_array(img)
+        #array = keras.preprocessing.image.img_to_array(img)
         # We add a dimension to transform our array into a "batch"
         # of size (1, 299, 299, 3)
-        array = np.expand_dims(array, axis=0)
+        array = np.expand_dims(img, axis=0)
         return array
 
     def get_gradients(self, img_input, top_pred_idx):
@@ -301,17 +302,11 @@ class IG:
             overlay=overlay,
         )
 
-        _, ax = plt.subplots(1, 2, figsize=figsize)
-        ax[0].imshow(image)
 
-        ax[1].imshow(igrads_attr.astype(np.uint8))
-
-        ax[0].set_title("Input")
-
-        ax[1].set_title("Integrated gradients")
-        plt.show()
 
         return igrads_attr.astype(np.uint8)
+
+
 
     def explain(self, image):
         # 1. Convert the image to numpy array
@@ -322,7 +317,7 @@ class IG:
 
         # 3. Get model predictions
         preds = self.model.predict(img)
-        top_pred_idx = tf.argmax(preds[0])
+        top_pred_idx = tf.argmax(preds[0]).numpy()
 
         # 4. Get the integrated gradients
         igrads = self.random_baseline_integrated_gradients(
@@ -337,5 +332,6 @@ class IG:
             morphological_cleanup=True,
             outlines=True,
         )
+
 
         return top_pred_idx, explanation
