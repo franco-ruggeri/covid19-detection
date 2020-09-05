@@ -24,11 +24,11 @@ class _COVIDNetBlock(Layer):
         self._pooling = MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same')
 
     def call(self, inputs, training=None, mask=None):
-        branch_conv_output = self._branch_conv(inputs)
+        branch_conv_output = self._branch_conv(inputs, training=training)
 
         x = inputs
         for i in range(len(self._branch_pepx)):
-            x = self._branch_pepx[i](x)
+            x = self._branch_pepx[i](x, training=training)
             x = add([x, branch_conv_output])
 
         return self._pooling(x)

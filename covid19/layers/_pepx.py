@@ -55,11 +55,11 @@ class PEPXBlock(Layer):
         ], name='extension')
 
     def call(self, inputs, training=None, mask=None):
-        x = self._projection_1(inputs)
-        x = self._expansion(x)
-        x = self._depth_wise(x)
-        x = self._projection_2(x)
-        x = self._extension(x)
+        x = self._projection_1(inputs, training=training)
+        x = self._expansion(x, training=training)
+        x = self._depth_wise(x, training=training)
+        x = self._projection_2(x, training=training)
+        x = self._extension(x, training=training)
         return x
 
     def get_config(self):
