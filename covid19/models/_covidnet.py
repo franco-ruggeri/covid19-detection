@@ -1,7 +1,7 @@
 import tensorflow as tf
 from covid19.models._model import Model
 from covid19.layers import Rescaling, PEPXBlock
-from tensorflow.keras import Input, Sequential
+from tensorflow.keras import Sequential
 from tensorflow.keras.layers import Layer, Conv2D, BatchNormalization, ReLU, MaxPool2D, Flatten, Dense, add
 
 
@@ -52,13 +52,16 @@ class COVIDNet(Model):
     - Inputs rescaled in the range [-1, 1].
     """
 
-    def __init__(self, name='covidnet', weights='imagenet'):
+    def __init__(self, n_classes, name='covidnet', weights=None):
+        """
+        :param n_classes: int, number of classes (units in the last layer)
+        :param name: string, name of the model
+        :param weights: path to the weights to load
+        """
         super().__init__(name=name)
         self._image_shape = (224, 224, 3)
+        self._n_classes = n_classes
         self._from_scratch = weights is None
-
-        if weights is not None:
-            raise NotImplementedError
 
         initial_conv = Sequential([
             Conv2D(64, 7, strides=(2, 2), padding='same'),
@@ -79,13 +82,12 @@ class COVIDNet(Model):
             Flatten(),
             Dense(1024, activation='relu'),
             Dense(1024, activation='relu'),
-            Dense(3, activation='softmax')
+            Dense(n_classes, activation='softmax')
         ], name='classifier')
 
-        # required for summary()
-        inputs = Input(shape=self.image_shape)
-        outputs = self.call(inputs)
-        super().__init__(name=name, inputs=inputs, outputs=outputs)
+        if weights is not None:
+            self.load_weights(weights)
+
         self.build(input_shape=(None, self.image_shape[0], self.image_shape[1], self.image_shape[2]))
 
     def call(self, inputs, training=None, mask=None):
@@ -99,14 +101,19 @@ class COVIDNet(Model):
         x = self.classifier(x)
         return x
 
+    def get_config(self):
+        config = super().get_config()
+        config.update({'n_classes': self._n_classes})
+        return config
+
     def fit_linear_classifier(self, learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks,
                               class_weights=None):
         self.feature_extractor.trainable = False
         self.classifier.trainable = True
         for layer in self.classifier.layers[:-1]:
             layer.trainable = False
-        return self._compile_and_fit(learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks,
-                                     class_weights)
+        return self.compile_and_fit(learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks,
+                                    class_weights)
 
     def fine_tune(self, learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks, fine_tune_at,
                   class_weights=None):
@@ -116,21 +123,23 @@ class COVIDNet(Model):
         if fine_tune_at > n_layers_feature_extractor + n_layers_classifier - 1:
             raise ValueError('Too big fine_tune_at, more than the number of layers')
 
-        if fine_tune_at > n_layers_feature_extractor:   # freeze all the convolutional base + part of the classifier
+        if fine_tune_at > n_layers_feature_extractor:
+            # freeze all the convolutional base + part of the classifier
             self.feature_extractor.trainable = False
             fine_tune_at -= n_layers_feature_extractor
             self.classifier.trainable = True
             for layer in self.classifier.layers[:fine_tune_at]:
                 layer.trainable = False
-        else:                                           # freeze part of the convolutional base
+        else:
+            # freeze part of the convolutional base
             self.feature_extractor.trainable = True
             for layer in self.feature_extractor.layers[:fine_tune_at]:
                 layer.trainable = False
             for layer in self.classifier.layers:
                 layer.trainable = True
 
-        return self._compile_and_fit(learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks,
-                                     class_weights)
+        return self.compile_and_fit(learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks,
+                                    class_weights)
 
     @property
     def feature_extractor(self):

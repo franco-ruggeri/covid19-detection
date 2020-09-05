@@ -4,23 +4,22 @@ from pathlib import Path
 from covid19.datasets import image_dataset_from_directory
 from covid19.metrics import plot_learning_curves
 from covid19.models import ResNet50, COVIDNet
+from tensorflow.keras.layers import Dense
 from tensorflow.keras.losses import CategoricalCrossentropy
 from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard
-from tensorflow.keras.metrics import CategoricalAccuracy, AUC, Precision, Recall
+from tensorflow.keras.metrics import CategoricalAccuracy, AUC
 from tensorflow_addons.metrics import F1Score
 
 VERBOSE = 2
 IMAGE_SIZE = (224, 224)
 
 
-def get_model(architecture, weights, model_path, dataset_info):
+def get_model(architecture, model_path, dataset_info):
     n_classes = dataset_info['n_classes']
-    if weights == 'None':
-        weights = None
     if architecture == 'resnet50':
-        model = ResNet50(n_classes, weights=weights)
+        model = ResNet50(n_classes, weights=None)
     elif architecture == 'covidnet':
-        model = COVIDNet(n_classes, weights=weights)
+        model = COVIDNet(n_classes, weights=None)
     else:
         raise ValueError('Invalid architecture')
     if model_path is not None:
@@ -38,13 +37,10 @@ def get_metrics(dataset_info):
     # - AUC and F1-score are computed with macro-average (we care a lot about the small COVID-19 class!)
     # - precision and recall are computed only on the COVID-19 class (again, it is the most important)
     n_classes = dataset_info['n_classes']
-    covid19_label = dataset_info['class_labels']['covid-19']
     return [
         CategoricalAccuracy(name='accuracy'),
         AUC(name='auc', multi_label=True),      # multi_label=True => macro-average
-        F1Score(name='f1-score', num_classes=n_classes, average='macro'),
-        Precision(name='precision_covid19', class_id=covid19_label),
-        Recall(name='recall_covid19', class_id=covid19_label),
+        F1Score(name='f1-score', num_classes=n_classes, average='macro')
     ]
 
 
@@ -71,9 +67,9 @@ def get_class_weights(train_ds_info):
 
 def main():
     # command-line arguments
-    parser = argparse.ArgumentParser(description='Train COVID-19 detection model.',
+    parser = argparse.ArgumentParser(description='Pretrain COVID-19 detection model.',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('data', type=str, help='path to COVIDx dataset')
+    parser.add_argument('data', type=str, help='path to the dataset')
     parser.add_argument('model', type=str, help='path where to save trained model, checkpoints and logs. Must be a '
                                                 'non-existing directory.')
     parser.add_argument('--architecture', type=str, default='resnet50', help='architecture to use. Supported: '
@@ -85,9 +81,6 @@ def main():
     parser.add_argument('--initial-epoch', type=int, default=0, help='initial epochs to skip')
     parser.add_argument('--epochs', type=int, default=30, help='epochs of training for classifier on top')
     parser.add_argument('--learning-rate', type=int, default=1e-4, help='learning rate for training classifier on top')
-    parser.add_argument('--epochs-ft', type=int, default=10, help='epochs of fine-tuning')
-    parser.add_argument('--learning-rate-ft', type=int, default=1e-6, help='learning rate for fine-tuning')
-    parser.add_argument('--fine-tune-at', type=int, default=0, help='index of layer at which to start to unfreeze')
     args = parser.parse_args()
 
     # prepare paths
@@ -114,17 +107,15 @@ def main():
     callbacks = get_callbacks(checkpoints_path, logs_path)
     class_weights = get_class_weights(train_ds_info) if args.class_weights else None
 
-    # train linear classifier
-    model = get_model(args.architecture, args.weights, args.load_model, train_ds_info)
-    history = model.fit_linear_classifier(args.learning_rate, loss, metrics, train_ds, val_ds, args.epochs,
-                                          args.initial_epoch, callbacks, class_weights)
-    model.save_weights(str(models_path / 'model_no_ft'))
+    # train whole model from scratch
+    model = get_model(args.architecture, args.load_model, train_ds_info)
+    history = model.compile_and_fit(args.learning_rate, loss, metrics, train_ds, val_ds, args.epochs,
+                                    args.initial_epoch, callbacks, class_weights)
+    plot_learning_curves(history, save_path=plots_path)
 
-    # fine-tune some layers
-    history_ft = model.fine_tune(args.learning_rate_ft, loss, metrics, train_ds, val_ds, args.epochs_ft,
-                                 args.initial_epoch + args.epochs, callbacks, args.fine_tune_at, class_weights)
-    model.save_weights(str(models_path / 'model_ft'))
-    plot_learning_curves(history, history_ft, save_path=plots_path)
+    # replace last layer (so that the weights can be loaded for COVID-19 detection) and save
+    model.classifier[-1] = Dense(3)
+    model.save_weights(str(models_path / 'model_pretrained'))
 
 
 if __name__ == '__main__':

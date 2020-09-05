@@ -57,7 +57,7 @@ def main():
     parser = argparse.ArgumentParser(description='Test COVID-19 detection model.',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('analysis', type=str, help='type of evaluation. Supported: performance, explainability.')
-    parser.add_argument('data', type=str, help='path to COVIDx dataset')
+    parser.add_argument('data', type=str, help='path to the dataset')
     parser.add_argument('output', type=str, help='path where to save the results')
     parser.add_argument('model', type=str, help='path to the model/checkpoint to test')
     args = parser.parse_args()
@@ -80,7 +80,7 @@ def main():
     elif args.analysis == 'explainability':
         explain(model, test_ds, test_ds_info, output_path)
     else:
-        raise ValueError('Invalid analysis')
+        raise ValueError('Invalid analysis.')
 
 
 if __name__ == '__main__':

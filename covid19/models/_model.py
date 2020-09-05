@@ -13,18 +13,26 @@ class Model(tf.keras.Model, ABC):
     - classifier: classification model based on dense layers, on top of the convolutional base.
     """
 
-    def __init__(self, **kwargs):
-        super().__init__(kwargs)
+    def compile_and_fit(self, learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks,
+                        class_weights):
+        """
+        Compiles and fits the model.
 
-    def _compile_and_fit(self, learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks,
-                         class_weights):
+        :param learning_rate: float, learning rate
+        :param loss: tf.keras.Loss, loss function for the optimizer
+        :param metrics: list of tf.keras.Metric, metrics of interest
+        :param train_ds: tf.data.Dataset, training dataset
+        :param val_ds: tf.data.Dataset, validation dataset
+        :param epochs: int, number of epochs (effective, not counting the initial epochs to skip)
+        :param initial_epoch: int, number of initial epochs to skip
+        :param callbacks: list of tf.keras.Callback, callbacks for the training loop
+        :param class_weights: dictionary (label -> weight), class weights to compensate dataset imbalance.
+        :return: History object
+        """
         self.compile(optimizer=Adam(lr=learning_rate), loss=loss, metrics=metrics)
         self.summary()
         return self.fit(train_ds, epochs=epochs+initial_epoch, initial_epoch=initial_epoch, validation_data=val_ds,
                         callbacks=callbacks, class_weight=class_weights)
-
-    def get_config(self):
-        super().get_config()
 
     @abstractmethod
     def call(self, inputs, training=None, mask=None):
@@ -32,10 +40,14 @@ class Model(tf.keras.Model, ABC):
         pass
 
     @abstractmethod
+    def get_config(self):
+        return super().get_config()
+
+    @abstractmethod
     def fit_linear_classifier(self, learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks,
                               class_weights=None):
         """
-        Fit layer on top, freezing the rest of the network. It has to be used as first step of transfer learning,
+        Fits layer on top, freezing the rest of the network. It has to be used as first step of transfer learning,
         before fine-tuning.
 
         :param learning_rate: float, learning rate
@@ -55,7 +67,7 @@ class Model(tf.keras.Model, ABC):
     def fine_tune(self, learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks, fine_tune_at,
                   class_weights=None):
         """
-        Fine-tune some layers. The learning rate should be lower than the normal fit.
+        Fine-tunes some layers. The learning rate should be lower than the normal fit.
 
         :param learning_rate: float, learning rate
         :param loss: tf.keras.Loss, loss function for the optimizer
