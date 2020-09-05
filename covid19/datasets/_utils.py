@@ -4,6 +4,10 @@ from tqdm import tqdm
 from pathlib import Path
 
 
+def _get_labels(dataset):
+    return {sample[2] for sample in dataset}
+
+
 def _split_class(dataset, label, split):
     # select samples and IDs for the class
     train_set = [sample for sample in dataset if sample[2] == label]
@@ -23,18 +27,9 @@ def _split_class(dataset, label, split):
     return train_set, test_set
 
 
-def stratified_sampling(dataset, labels, split):
-    train_set = []
-    test_set = []
-    for label in labels:
-        train_set_, test_set_ = _split_class(dataset, label, split)
-        train_set += train_set_
-        test_set += test_set_
-    return train_set, test_set
-
-
-def _copy_or_move_images(dataset, labels, output_path, move=False):
+def _copy_or_move_images(dataset, output_path, move=False):
     # create paths
+    labels = _get_labels(dataset)
     output_path = Path(output_path)
     output_path.mkdir(exist_ok=True)
     for label in labels:
@@ -55,9 +50,39 @@ def _copy_or_move_images(dataset, labels, output_path, move=False):
                 shutil.copy(filepath, new_filepath)
 
 
-def copy_images(dataset, labels, output_path):
-    _copy_or_move_images(dataset, labels, output_path)
+def stratified_sampling(dataset, split):
+    """
+    Split a dataset in training set and test set using stratified sampling.
+
+    :param dataset: list of tuples (id, filepath, label)
+    :param split: float, percentage of dataset for test set (must be between 0 and 1)
+    :return: (train_set, test_set)
+    """
+    labels = _get_labels(dataset)
+    train_set = []
+    test_set = []
+    for label in labels:
+        train_set_, test_set_ = _split_class(dataset, label, split)
+        train_set += train_set_
+        test_set += test_set_
+    return train_set, test_set
 
 
-def move_images(dataset, labels, output_path):
-    _copy_or_move_images(dataset, labels, output_path, move=True)
+def copy_images(dataset, output_path):
+    """
+    Copies the images of a dataset to a new path.
+
+    :param dataset: list of tuples (id, filepath, label)
+    :param output_path: path where to copy the images (destination path).
+    """
+    _copy_or_move_images(dataset, output_path)
+
+
+def move_images(dataset, output_path):
+    """
+    Moves the images of a dataset to a new path.
+
+    :param dataset: list of tuples (id, filepath, label)
+    :param output_path: path where to copy the images (destination path).
+    """
+    _copy_or_move_images(dataset, output_path, move=True)

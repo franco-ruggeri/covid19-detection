@@ -279,8 +279,8 @@ def generate_covidx(dataset_path, output_path, test_split=.15, validation_split=
     dataset = _process_dataset_4(dataset, dataset_path / 'COVID-19 Radiography Database', tmp_path, urls)
     dataset = _process_dataset_5(dataset, dataset_path / 'rsna-pneumonia-detection-challenge', tmp_path)
 
-    train_set, test_set = stratified_sampling(dataset, LABELS, test_split)
-    train_set, val_set = stratified_sampling(train_set, LABELS, validation_split)
+    train_set, test_set = stratified_sampling(dataset, test_split)
+    train_set, val_set = stratified_sampling(train_set, validation_split)
 
     move_images(train_set, output_path / 'train')
     move_images(val_set, output_path / 'validation')

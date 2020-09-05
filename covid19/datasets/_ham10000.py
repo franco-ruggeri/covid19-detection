@@ -69,10 +69,9 @@ def generate_ham10000(dataset_path, output_path, test_split=.15, validation_spli
     output_path = Path(output_path)
 
     dataset = _process_dataset(dataset_path)
-    labels = {sample[2] for sample in dataset}
-    train_set, test_set = stratified_sampling(dataset, labels, test_split)
-    train_set, val_set = stratified_sampling(train_set, labels, validation_split)
+    train_set, test_set = stratified_sampling(dataset, test_split)
+    train_set, val_set = stratified_sampling(train_set, validation_split)
 
-    copy_images(train_set, labels, output_path / 'train')
-    copy_images(val_set, labels, output_path / 'validation')
-    copy_images(test_set, labels, output_path / 'test')
+    copy_images(train_set, output_path / 'train')
+    copy_images(val_set, output_path / 'validation')
+    copy_images(test_set, output_path / 'test')
