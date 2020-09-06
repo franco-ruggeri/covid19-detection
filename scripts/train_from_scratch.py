@@ -90,7 +90,8 @@ def main():
 
     if args.pretraining:
         # replace last layer (so that the weights can be loaded for COVID-19 detection) and save
-        model.classifier[-1] = Dense(3)
+        model.classifier.pop()
+        model.classifier.add(Dense(3))
         model.save_weights(str(models_path / 'model_pretrained'))
 
 
