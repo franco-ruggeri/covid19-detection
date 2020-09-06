@@ -44,7 +44,8 @@ class COVIDNet(Model):
 
     Since the paper does not provide all the details, some choices have been taken according to the state of the art:
     - Batch normalization and ReLU activation for every convolutional layer (BN before ReLU).
-    - Pooling 3x3 with stride 2 at the end of each block (where the dimensionality decreases in the diagram).
+    - Max pooling 3x3 with stride 2 at the end of each block (where the dimensionality decreases in the diagram).
+    - L2 regularization in the fully connected layers.
     - Inputs rescaled in the range [-1, 1].
     """
 
@@ -80,9 +81,13 @@ class COVIDNet(Model):
 
         self._classifier = Sequential([
             Flatten(),
-            Dense(1024, activation='relu'),
-            Dense(1024, activation='relu'),
-            Dense(n_classes, activation='softmax')
+            Dense(1024, kernel_regularizer='l2'),
+            BatchNormalization(),
+            ReLU(),
+            Dense(1024, kernel_regularizer='l2'),
+            BatchNormalization(),
+            ReLU(),
+            Dense(n_classes, kernel_regularizer='l2', activation='softmax')
         ], name='classifier')
 
         if weights is not None:

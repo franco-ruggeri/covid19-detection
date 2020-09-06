@@ -63,10 +63,10 @@ class ResNet50(Model):
 
     def fine_tune(self, learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks, fine_tune_at,
                   class_weights=None):
-        if fine_tune_at > len(self.feature_extractor.layers):
+        if fine_tune_at > len(self.feature_extractor.layers[-1].layers):
             raise ValueError('Too big fine_tune_at, more than the number of layers')
         self.feature_extractor.trainable = True     # unfreeze convolutional base
-        for layer in self.feature_extractor.layers[-1][:fine_tune_at]:
+        for layer in self.feature_extractor.layers[-1].layers[:fine_tune_at]:
             layer.trainable = False                 # freeze bottom layers
         return self.compile_and_fit(learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks,
                                     class_weights)
