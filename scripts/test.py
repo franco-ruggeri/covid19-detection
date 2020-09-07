@@ -56,6 +56,58 @@ def explain(model, dataset, dataset_info, output_path, explainer):
                 count[label] += 1
 
 
+import matplotlib.pyplot as plt
+def explain2(model, dataset, dataset_info, output_path):
+    explainer1 = GradCAM(model)
+    explainer2 = IG(model)
+
+    count = {label: 0 for label in dataset_info['class_labels'].values()}
+    class_names = {label: class_name for class_name, label in dataset_info['class_labels'].items()}    # reverse
+    n_batches = dataset_info['n_batches']
+    iter_dataset = iter(dataset)
+
+    with tqdm(total=n_batches * dataset_info['batch_size']) as bar:
+        bar.set_description('Explaining images')
+
+        for _ in range(n_batches):   # can't directly iterate over dataset, as it iterates forever
+            batch = next(iter_dataset)
+            images = batch[0]
+            labels = batch[1]
+
+            for image, label in zip(images, labels):
+                bar.update()
+
+                prediction1, explanation1 = explainer1.explain(image)
+                prediction2, explanation2 = explainer2.explain(image)
+
+                label = np.argmax(label)
+                save_path = output_path / (class_names[label] + '_{:05d}'.format(count[label]) + '.png')
+
+                plt.figure()
+
+                plt.subplot(1, 3, 1)
+                plt.imshow(image / 255)
+                plt.axis('off')
+                plt.title('original')
+
+                plt.subplot(1, 3, 2)
+                plt.imshow(explanation1)
+                plt.axis('off')
+                plt.title('Grad-CAM')
+
+                plt.subplot(1, 3, 3)
+                plt.imshow(explanation2)
+                plt.axis('off')
+                plt.title('Integrated Gradients')
+
+                plt.suptitle('Prediction: {}\nGround truth: {}'.format(class_names[prediction1], class_names[label]))
+
+                plt.savefig(save_path)
+                plt.close()
+
+                count[label] += 1
+
+
 def main():
     # command-line arguments
     parser = argparse.ArgumentParser(description='Test COVID-19 detection model.',
@@ -81,7 +133,8 @@ def main():
     if args.analysis == 'performance':
         evaluate(model, test_ds, test_ds_info, output_path)
     elif args.analysis == 'explainability':
-        explain(model, test_ds, test_ds_info, output_path, args.explainer)
+        # explain(model, test_ds, test_ds_info, output_path, args.explainer)
+        explain2(model, test_ds, test_ds_info, output_path)
     else:
         raise ValueError('Invalid analysis.')
 

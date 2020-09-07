@@ -3,7 +3,6 @@ from utils import get_model, get_callbacks, get_class_weights, IMAGE_SIZE
 from pathlib import Path
 from covid19.datasets import image_dataset_from_directory
 from covid19.metrics import plot_learning_curves
-from tensorflow.keras.layers import Dense
 from tensorflow.keras.losses import CategoricalCrossentropy
 from tensorflow.keras.metrics import CategoricalAccuracy, AUC, Precision, Recall
 from tensorflow_addons.metrics import F1Score
@@ -27,8 +26,6 @@ def get_command_line_arguments():
                         help='initial epochs to skip (useful for resuming training)')
     parser.add_argument('--epochs', type=int, default=30, help='epochs of training')
     parser.add_argument('--learning-rate', type=float, default=1e-4, help='learning rate for training')
-    parser.add_argument('--pretraining', action='store_true', default=False,
-                        help='whether this run is for pretraining (the pretrained model will be saved)')
     return parser.parse_args()
 
 
@@ -87,12 +84,6 @@ def main():
                                     args.initial_epoch, callbacks, class_weights)
     model.save_weights(str(models_path / 'model'))
     plot_learning_curves(history, save_path=plots_path)
-
-    if args.pretraining:
-        # replace last layer (so that the weights can be loaded for COVID-19 detection) and save
-        model.classifier.pop()
-        model.classifier.add(Dense(3))
-        model.save_weights(str(models_path / 'model_pretrained'))
 
 
 if __name__ == '__main__':
