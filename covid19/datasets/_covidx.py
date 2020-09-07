@@ -6,6 +6,7 @@ import pandas as pd
 import pydicom as dicom
 from pathlib import Path
 from tqdm import tqdm
+from covid19.datasets._utils import stratified_sampling, move_images
 
 LABELS = ['covid-19', 'normal', 'pneumonia']
 PREFIX = 'COVIDx'
@@ -48,7 +49,7 @@ def _process_dataset_1(dataset, dataset_path, tmp_path):
                 # check filepath
                 filepath = image_path / row['filename']
                 if not filepath.is_file():
-                    raise FileNotFoundError('file ' + str(filepath) + ' not found')
+                    raise FileNotFoundError('File ' + str(filepath) + ' not found')
 
                 # copy image in gray-scale
                 new_filepath = tmp_path / (PREFIX + '_{:05d}'.format(count) + '.png')
@@ -86,7 +87,7 @@ def _process_dataset_2(dataset, dataset_path, tmp_path):
                 elif filepath.with_suffix('.png').is_file():
                     filepath = filepath.with_suffix('.png')
                 else:
-                    raise FileNotFoundError('file ' + str(filepath) + ' not found')
+                    raise FileNotFoundError('File ' + str(filepath) + ' not found')
 
                 # copy image in gray-scale
                 new_filepath = tmp_path / _get_filename(count)
@@ -119,7 +120,7 @@ def _process_dataset_3(dataset, dataset_path, tmp_path):
                 patient_id = row['patientid']
                 filepath = image_path / row['imagename']
                 if not filepath.is_file():
-                    raise FileNotFoundError('file ' + str(filepath) + ' not found')
+                    raise FileNotFoundError('File ' + str(filepath) + ' not found')
 
                 # copy image in gray-scale
                 new_filepath = tmp_path / _get_filename(count)
@@ -163,7 +164,7 @@ def _process_dataset_4(dataset, dataset_path, tmp_path, urls):
                 filename = row['FILE NAME'].split('(')[0] + ' (' + row['FILE NAME'].split('(')[1]
                 filepath = filepath.with_name(filename).with_suffix(suffix)
                 if not filepath.is_file():
-                    raise FileNotFoundError('file ' + str(filepath) + ' not found')
+                    raise FileNotFoundError('File ' + str(filepath) + ' not found')
 
             # copy image in gray-scale
             new_filepath = tmp_path / _get_filename(count)
@@ -184,7 +185,7 @@ def _process_dataset_5_sample(dataset, file_paths, tmp_path, row, image_path, la
     # check filepath
     if filepath not in file_paths:  # repetition
         if not filepath.is_file():
-            raise FileNotFoundError('file ' + str(filepath) + ' not found')
+            raise FileNotFoundError('File ' + str(filepath) + ' not found')
         file_paths.add(filepath)
 
         # copy image from .dcm to .png
@@ -230,55 +231,7 @@ def _process_dataset_5(dataset, dataset_path, tmp_path):
     return dataset
 
 
-def _split_class(dataset, label, split):
-    # select samples and patients for the class
-    train_set = [sample for sample in dataset if sample[2] == label]
-    test_set = []
-    patients = list({sample[0] for sample in train_set})
-
-    # sample patients until the number of images is enough
-    # note: patients are sampled, not directly samples, since we all the samples of a patient in one set
-    n_desired = split * len(train_set)
-    n = 0
-    while n < n_desired:
-        patient = patients.pop(np.random.choice(len(patients)))
-        patient_samples = {sample for sample in train_set if sample[0] == patient}
-        train_set = [sample for sample in train_set if sample not in patient_samples]   # remove used samples
-        test_set += patient_samples
-        n += len(patient_samples)
-    return train_set, test_set
-
-
-def _stratified_sampling(dataset, split):
-    train_set = []
-    test_set = []
-    for label in LABELS:
-        train_set_, test_set_ = _split_class(dataset, label, split)
-        train_set += train_set_
-        test_set += test_set_
-    return train_set, test_set
-
-
-def _move_images(dataset, output_path):
-    # create paths
-    shutil.rmtree(output_path, ignore_errors=True)
-    output_path.mkdir()
-    for label in LABELS:
-        label_path = output_path / label
-        label_path.mkdir()
-
-    # move images
-    with tqdm(total=len(dataset)) as bar:
-        bar.set_description('Building ' + str(output_path))
-        for sample in dataset:
-            bar.update()
-            label = sample[2]
-            filepath = sample[1]
-            new_filepath = output_path / label / filepath.name
-            shutil.move(filepath, new_filepath)
-
-
-def generate_data(dataset_path, output_path, test_split=.15, validation_split=.15, seed=None):
+def generate_covidx(dataset_path, output_path, test_split=.15, validation_split=.15, seed=None):
     """
     Generates COVIDx dataset using the following sources:
     - 1) https://github.com/ieee8023/covid-chestxray-dataset
@@ -308,42 +261,28 @@ def generate_data(dataset_path, output_path, test_split=.15, validation_split=.1
     :param output_path: path where to put COVIDx dataset
     :param test_split: float, fraction of data to be used as test set (must be between 0 and 1)
     :param validation_split: float, fraction of training data to be used as validation set (must be between 0 and 1)
+    :param seed: seed for random number generator
     """
     if seed is not None:
         np.random.seed(seed)
 
     dataset_path = Path(dataset_path)
-    if not dataset_path.is_dir():
-        raise ValueError('Invalid dataset path')
-
     output_path = Path(output_path)
-    output_path.mkdir(parents=True, exist_ok=True)
     tmp_path = output_path / ('tmp' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S"))
     shutil.rmtree(tmp_path, ignore_errors=True)
     tmp_path.mkdir()
 
     dataset = []
-    urls = set()
     dataset, urls = _process_dataset_1(dataset, dataset_path / 'covid-chestxray-dataset', tmp_path)
     dataset = _process_dataset_2(dataset, dataset_path / 'Figure1-COVID-chestxray-dataset', tmp_path)
     dataset = _process_dataset_3(dataset, dataset_path / 'Actualmed-COVID-chestxray-dataset', tmp_path)
     dataset = _process_dataset_4(dataset, dataset_path / 'COVID-19 Radiography Database', tmp_path, urls)
     dataset = _process_dataset_5(dataset, dataset_path / 'rsna-pneumonia-detection-challenge', tmp_path)
 
-    train_set, test_set = _stratified_sampling(dataset, test_split)
-    train_set, val_set = _stratified_sampling(train_set, validation_split)
+    train_set, test_set = stratified_sampling(dataset, test_split)
+    train_set, val_set = stratified_sampling(train_set, validation_split)
 
-    _move_images(train_set, output_path / 'train')
-    _move_images(val_set, output_path / 'validation')
-    _move_images(test_set, output_path / 'test')
+    move_images(train_set, output_path / 'train')
+    move_images(val_set, output_path / 'validation')
+    move_images(test_set, output_path / 'test')
     shutil.rmtree(tmp_path)
-
-    print()
-    print('Stats:')
-    print('# images:', len(dataset))
-    print('# patients:', len({sample[0] for sample in dataset}))
-    for label in LABELS:
-        print('# {}: {}'.format(label, len([sample for sample in dataset if sample[2] == label])))
-        print('# train {}: {}'.format(label, len([sample for sample in train_set if sample[2] == label])))
-        print('# val {}: {}'.format(label, len([sample for sample in val_set if sample[2] == label])))
-        print('# test {}: {}'.format(label, len([sample for sample in test_set if sample[2] == label])))

@@ -45,10 +45,11 @@ def image_dataset_from_directory(dataset_path, image_size, augmentation=False, s
     # useful info
     info = {
         'n_classes': n_classes,
-        'n_images': image_flow.classes[0],
+        'n_images': len(image_flow.classes),
         'n_batches': n_batches,
         'class_labels': image_flow.class_indices,
-        'batch_size': BATCH_SIZE
+        'batch_size': BATCH_SIZE,
+        'labels': image_flow.classes
     }
 
     return dataset, info

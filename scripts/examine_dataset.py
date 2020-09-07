@@ -32,10 +32,10 @@ def get_stats(dataset_path):
 
 
 def write_stats(stats, class_names, save_path):
-    with open(save_path / 'dataset.txt', 'w') as f:
+    with open(save_path / 'stats.txt', 'w') as f:
         for dataset, dataset_stats in stats.items():
-            f.write('{:<15}\n'.format(dataset))
-            print('{:<15}'.format(dataset))
+            f.write('{:<15}\n'.format(dataset + ' set:'))
+            print('{:<15}'.format(dataset + ' set:'))
             for class_name, class_size in zip(class_names, dataset_stats[0]):
                 f.write('{:<15}{:^15}\n'.format(class_name, class_size))
                 print('{:<15}{:^15}'.format(class_name, class_size))
@@ -49,17 +49,18 @@ def plot_stats(stats, class_names, save_path):
     plt.bar(x, stats['training'][0], width=0.25, label='training')
     plt.bar(x + 0.25, stats['validation'][0], width=0.25, tick_label=class_names, label='validation')
     plt.bar(x + 0.5, stats['test'][0], width=0.25, label='test')
-    plt.ylabel('number of images')
+    plt.ylabel('number of images ($log_{10}$)')
+    plt.yscale('log')
     plt.legend(loc='upper left')
-    plt.savefig(save_path / 'dataset.png')
+    plt.savefig(save_path / 'stats.png')
     plt.show()
 
 
 def main():
     # command-line arguments
-    parser = argparse.ArgumentParser(description='Analysis of COVIDx dataset.')
-    parser.add_argument('data', type=str, help='Path to COVIDx dataset')
-    parser.add_argument('output', type=str, help='Path where to save the dataset stats')
+    parser = argparse.ArgumentParser(description='Examine dataset.')
+    parser.add_argument('data', type=str, help='path to the dataset')
+    parser.add_argument('output', type=str, help='path where to save the dataset stats')
     args = parser.parse_args()
 
     # prepare paths

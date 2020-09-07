@@ -1,8 +1,6 @@
 import numpy as np
-import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import tensorflow as tf
-from tensorflow.keras import Input, Model
 from tensorflow.keras.preprocessing.image import array_to_img, img_to_array
 
 
@@ -15,24 +13,15 @@ class GradCAM:
     """
 
     def __init__(self, model):
-        # model mapping input image to activations of last conv layer
-        inputs = Input(shape=model.image_shape)
-        x = model.preprocess(inputs)
-        outputs = model.feature_extractor(x)
-        self.conv_base = Model(inputs=inputs, outputs=outputs)
-
-        # model mapping activations of last conv layer to predictions
-        inputs = Input(shape=outputs.shape[1:])
-        outputs = model.classifier(inputs)
-        self.classifier = Model(inputs=inputs, outputs=outputs)
+        self.model = model
 
     def _predict(self, image):
         image = tf.expand_dims(image, axis=0)  # add batch dimension
 
         with tf.GradientTape() as tape:
-            last_conv_activations = self.conv_base(image)
+            last_conv_activations = self.model.feature_extractor(image)
             tape.watch(last_conv_activations)
-            probabilities = self.classifier(last_conv_activations)
+            probabilities = self.model.classifier(last_conv_activations)
             prediction = tf.argmax(probabilities[0]).numpy()
             top_probability = probabilities[:, prediction]
 
@@ -52,6 +41,12 @@ class GradCAM:
         return heatmap
 
     def explain(self, image):
+        """
+        Explains the image by superimposing a heatmap.
+
+        :param image:
+        :return: (prediction, explanation), where explanation is the superimposed image
+        """
         # predict
         prediction, last_conv_activations, gradients = self._predict(image)
 
