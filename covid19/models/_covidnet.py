@@ -10,12 +10,7 @@ class _COVIDNetBlock(Layer):
         self.channels = channels
         self.n_pepx = n_pepx
 
-        self._branch_conv = Sequential([
-            Conv2D(channels, 1),
-            BatchNormalization(),
-            ReLU()
-        ])
-
+        self._branch_conv = Conv2D(channels, 1)
         self._branch_pepx = []
         for _ in range(n_pepx):
             self._branch_pepx.append(PEPXBlock(channels))
@@ -43,10 +38,10 @@ class COVIDNet(Model):
     Outputs: batches of softmax activations (None, 3). The 3 classes are meant to be: covid-19, normal, pneumonia.
 
     Since the paper does not provide all the details, some choices have been taken according to the state of the art:
-    - Batch normalization and ReLU activation for every convolutional layer (BN before ReLU).
-    - Max pooling 3x3 with stride 2 at the end of each block (where the dimensionality decreases in the diagram).
-    - L2 regularization in the fully connected layers.
-    - Inputs rescaled in the range [-1, 1].
+    - Batch normalization, ReLU activation, and L2 regularization for the fully connected layers.
+    - Max pooling 3x3 with stride 2 at the end of each block (where the spatial dimensionality decreases).
+    - No activation and batch normalization for the convolutional layers.
+    - Inputs rescaled to the range [-1,1].
     """
 
     def __init__(self, n_classes, name='covidnet', weights=None):
@@ -60,15 +55,9 @@ class COVIDNet(Model):
         self._n_classes = n_classes
         self._transfer_learning = weights is not None
 
-        initial_conv = Sequential([
-            Conv2D(64, 7, strides=(2, 2), padding='same'),
-            BatchNormalization(),
-            ReLU()
-        ], name='conv_initial')
-
         self._feature_extractor = Sequential([
             Rescaling(1./127.5, offset=-1),
-            initial_conv,
+            Conv2D(64, 7, strides=(2, 2), padding='same'),
             MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same'),
             _COVIDNetBlock(256, 3),
             MaxPool2D(pool_size=(3, 3), strides=(2, 2), padding='same'),
