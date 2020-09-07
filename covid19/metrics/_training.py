@@ -26,7 +26,7 @@ def plot_learning_curves(history, history_ft=None, save_path=None):
         val_metric = 'val_' + metric
         train_values = history.history[metric]
         val_values = history.history[val_metric]
-        if history_ft is not None:
+        if history_ft is not None and metric in history_ft.history:
             train_values += history_ft.history[metric]
             val_values += history_ft.history[val_metric]
 
