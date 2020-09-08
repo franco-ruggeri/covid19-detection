@@ -41,6 +41,12 @@ class GradCAM:
         return heatmap
 
     def explain(self, image):
+        """
+        Explains the image by superimposing a heatmap.
+
+        :param image:
+        :return: (prediction, explanation), where explanation is the superimposed image
+        """
         # predict
         prediction, last_conv_activations, gradients = self._predict(image)
 

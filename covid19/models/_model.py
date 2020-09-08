@@ -16,17 +16,10 @@ class Model(tf.keras.Model, ABC):
     def __init__(self, **kwargs):
         super().__init__(kwargs)
 
-    def _compile_and_fit(self, learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks,
-                         class_weights):
-        self.compile(optimizer=Adam(lr=learning_rate), loss=loss, metrics=metrics)
-        self.summary()
-        return self.fit(train_ds, epochs=epochs, initial_epoch=initial_epoch, validation_data=val_ds,
-                        callbacks=callbacks, class_weight=class_weights)
-
-    def fit_classifier(self, learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks,
-                       class_weights=None):
+    def compile_and_fit(self, learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks,
+                        class_weights):
         """
-        Fit classifier (i.e. layers on top of the convolutional base), freezing the convolutional base.
+        Compiles and fits the model.
 
         :param learning_rate: float, learning rate
         :param loss: tf.keras.Loss, loss function for the optimizer
@@ -39,15 +32,53 @@ class Model(tf.keras.Model, ABC):
         :param class_weights: dictionary (label -> weight), class weights to compensate dataset imbalance.
         :return: History object
         """
-        self.feature_extractor.trainable = False
-        return self._compile_and_fit(learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks,
-                                     class_weights)
+        self.compile(optimizer=Adam(lr=learning_rate), loss=loss, metrics=metrics)
+        self.summary()
+        return self.fit(train_ds, epochs=epochs+initial_epoch, initial_epoch=initial_epoch, validation_data=val_ds,
+                        callbacks=callbacks, class_weight=class_weights)
 
+    def call(self, inputs, training=None, mask=None):
+        """Forward pass."""
+        # using Rescaling layer, tf.data.Dataset and tf.keras.Model.fit() causes unknown shape... reshaping fixes
+        # see https://gitmemory.com/issue/tensorflow/tensorflow/24520/511633717
+        x = tf.reshape(inputs, tf.constant((-1,) + self.image_shape))
+
+        # if we are using pretrained weights (self.transfer_learning=True), BN layers must be kept in inference mode
+        # see https://www.tensorflow.org/tutorials/images/transfer_learning
+        training = False if self.transfer_learning else training
+
+        x = self.feature_extractor(x, training=training)
+        x = self.classifier(x, training=training)
+        return x
+
+    def get_config(self):
+        return super().get_config()
+
+    @abstractmethod
+    def fit_linear_classifier(self, learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks,
+                              class_weights=None):
+        """
+        Fits layer on top, freezing the rest of the network. It has to be used as first step of transfer learning,
+        before fine-tuning.
+
+        :param learning_rate: float, learning rate
+        :param loss: tf.keras.Loss, loss function for the optimizer
+        :param metrics: list of tf.keras.Metric, metrics of interest
+        :param train_ds: tf.data.Dataset, training dataset
+        :param val_ds: tf.data.Dataset, validation dataset
+        :param epochs: int, number of epochs (effective, not counting the initial epochs to skip)
+        :param initial_epoch: int, number of initial epochs to skip
+        :param callbacks: list of tf.keras.Callback, callbacks for the training loop
+        :param class_weights: dictionary (label -> weight), class weights to compensate dataset imbalance.
+        :return: History object
+        """
+        raise NotImplementedError
+
+    @abstractmethod
     def fine_tune(self, learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks, fine_tune_at,
                   class_weights=None):
         """
-        Fine-tune some convolutional layers (i.e. fit classifier + some convolutional layers, freezing the rest).
-        The learning rate should be lower than the normal fit.
+        Fine-tunes some layers. The learning rate should be lower than the normal fit.
 
         :param learning_rate: float, learning rate
         :param loss: tf.keras.Loss, loss function for the optimizer
@@ -61,34 +92,28 @@ class Model(tf.keras.Model, ABC):
         :param class_weights: dictionary (label -> weight), class weights to compensate dataset imbalance.
         :return: History object
         """
-        self.feature_extractor.trainable = True     # unfreeze convolutional base
-        for layer in self.feature_extractor.layers[:fine_tune_at]:
-            layer.trainable = False                 # freeze bottom layers
-        return self._compile_and_fit(learning_rate, loss, metrics, train_ds, val_ds, epochs+initial_epoch,
-                                     initial_epoch, callbacks, class_weights)
-
-    def get_config(self):
-        super().get_config()
-
-    @abstractmethod
-    def call(self, inputs, training=None, mask=None):
-        pass
+        raise NotImplementedError
 
     @property
     @abstractmethod
     def feature_extractor(self):
         """Convolutional model for feature extraction (e.g. tf.keras.applications.ResNet50). Must end with a
         convolutional layer."""
-        pass
+        raise NotImplementedError
 
     @property
     @abstractmethod
     def classifier(self):
         """Classification model on top of the convolutional base (e.g. Flatten -> Dense)."""
-        pass
+        raise NotImplementedError
 
     @property
     @abstractmethod
     def image_shape(self):
         """Shape of the input images (height, width, channels). For example, (224, 224, 3)."""
-        pass
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def transfer_learning(self):
+        raise NotImplementedError
