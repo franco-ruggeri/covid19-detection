@@ -3,5 +3,7 @@
 /models/
 /.idea/
 __pycache__/
-/covid_19_detection.egg-info/
+/covid19_detection.egg-info/
 /docs/report.zip
+/dist/
+/build/
