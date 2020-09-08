@@ -1,4 +1,4 @@
-# COVID-19 project
+# Explainable Detection of COVID-19 from Chest X-Ray Images
 This project is part of the course DD2424 Deep Learning in Data Science at KTH. The goal is to train a classifier for COVID-19 detection from chest X-ray (CXR) images and boost it with explainability. More information can be found in the [report](docs/report.pdf).
 
 ## How to install the package
@@ -18,13 +18,13 @@ The covid19 package is composed of the following sub-packages:
 ## Example of usage of the package
 
 ```
-from covid19.models import COVID-Net
+from covid19.models import COVIDNet
 from covid19.datasets import image_dataset_from_directory
 from covid19.metrics import plot_learning_curves
 
 train_ds, train_ds_info = image_dataset_from_directory('path/to/COVIDx/train')
 train_ds, _ = image_dataset_from_directory('path/to/COVIDx/validation')
-model = COVID-Net(train_ds_info['n_classes'])
+model = COVIDNet(train_ds_info['n_classes'])
 history = model.compile_and_fit(1e-4, 'cross_entropy', ['accuracy'], train_ds, val_ds, 30, 0, [])
 model.save_weights('path/to/save/model)
 plot_learning_curves(history, save_path='path/to/save/learning_curves)

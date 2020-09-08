@@ -5,7 +5,7 @@ with open('README.md') as f:
 
 setup(
     name='covid19-detection',
-    version='0.1.1',
+    version='0.1.3',
     description='Detection of COVID-19 from Chest X-Ray Images',
     long_description=long_description,
     long_description_content_type='text/markdown',
