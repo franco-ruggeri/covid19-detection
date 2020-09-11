@@ -1,10 +1,18 @@
+# datasets (too big)
 /data/
+
+# training results (too big)
 /logs/
 /models/
+
+# documents
+/docs/report.zip
+/docs/presentation.mp4
+/docs/proposal.pdf
+
+# python stuff
 /.idea/
 __pycache__/
 /covid19_detection.egg-info/
-/docs/report.zip
 /dist/
 /build/
-/docs/presentation.mp4
