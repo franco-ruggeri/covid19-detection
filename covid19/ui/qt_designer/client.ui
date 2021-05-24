@@ -37,6 +37,10 @@ QPushButton#predict:pressed {
 	border-radius: 12px;
 }
 
+QPushButton#predict:disabled {
+	background-color: rgba(75, 116, 22, 50%)
+}
+
 QPushButton#select_image {
 	padding: 5px;
 }
@@ -266,6 +270,9 @@ QGroupBox * {
          </item>
          <item row="3" column="1">
           <widget class="QPushButton" name="predict">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
            <property name="minimumSize">
             <size>
              <width>0</width>
@@ -356,7 +363,7 @@ QGroupBox * {
  </widget>
  <resources>
   <include location="resource.qrc"/>
-  <include location="qt_designer/resource.qrc"/>
+  <include location="resource.qrc"/>
  </resources>
  <connections/>
 </ui>

@@ -36,11 +36,11 @@ class Client(QMainWindow):
         self._input = None
         self.ui = Ui_Client()
         self.ui.setupUi(self)
-        self.ui.predict.setEnabled(False)
         self.ui.architecture.currentTextChanged.connect(self._refresh_explainer)
         self._input_size = _get_size(self.ui.input)
         self._explanation_size = _get_size(self.ui.explanation)
         self._refresh_architecture()
+        self.ui.predict.setEnabled(False)
 
     @Slot()
     def on_predict_clicked(self):
@@ -55,6 +55,7 @@ class Client(QMainWindow):
         self.ui.prediction.setText(self.class_labels[prediction])
         self.ui.confidence.setText('{:.2f}%'.format(confidence * 100))
         self.ui.explanation.setPixmap(numpy_to_pixmap(explanation, self._explanation_size))
+        self.ui.predict.setEnabled(False)
 
     @Slot()
     def on_select_image_clicked(self):
@@ -68,6 +69,9 @@ class Client(QMainWindow):
         self._input = cv2.imread(filename)
         self.ui.input.setPixmap(numpy_to_pixmap(self._input, self._input_size))
         self.ui.predict.setEnabled(True)
+        self.ui.prediction.clear()
+        self.ui.confidence.clear()
+        self.ui.explanation.setPixmap(':/images/default.png')
         print(filename)
 
     @Slot(str)
@@ -82,6 +86,7 @@ class Client(QMainWindow):
         else:
             raise ValueError('Invalid architecture')
         self._model.load_weights(model_path)
+        self.ui.predict.setEnabled(True)
         print('done')
 
     @Slot(str)
@@ -93,6 +98,7 @@ class Client(QMainWindow):
             self._explainer = IG(self._model)
         else:
             raise ValueError('Invalid architecture')
+        self.ui.predict.setEnabled(True)
         print('done')
 
     @Slot()

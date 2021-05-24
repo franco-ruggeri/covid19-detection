@@ -41,6 +41,10 @@ class Ui_Client(object):
 "	border-radius: 12px;\n"
 "}\n"
 "\n"
+"QPushButton#predict:disabled {\n"
+"	background-color: rgba(75, 116, 22, 50%)\n"
+"}\n"
+"\n"
 "QPushButton#select_image {\n"
 "	padding: 5px;\n"
 "}\n"
@@ -180,6 +184,7 @@ class Ui_Client(object):
 
         self.predict = QPushButton(self.settings)
         self.predict.setObjectName(u"predict")
+        self.predict.setEnabled(False)
         self.predict.setMinimumSize(QSize(0, 0))
         self.predict.setMaximumSize(QSize(200, 50))
 
