@@ -1,10 +1,11 @@
 import numpy as np
 import matplotlib.cm as cm
 import tensorflow as tf
+from covid19.explainers._explainer import Explainer
 from tensorflow.keras.preprocessing.image import array_to_img, img_to_array
 
 
-class GradCAM:
+class GradCAM(Explainer):
     """
     Grad-CAM (Gradient-weighted Class Activation Mapping).
 
@@ -24,9 +25,10 @@ class GradCAM:
             probabilities = self.model.classifier(last_conv_activations)
             prediction = tf.argmax(probabilities[0]).numpy()
             top_probability = probabilities[:, prediction]
+            confidence = top_probability[0]
 
         gradients = tape.gradient(top_probability, last_conv_activations)
-        return prediction, last_conv_activations, gradients
+        return prediction, confidence, last_conv_activations, gradients
 
     @staticmethod
     def _make_heatmap(last_conv_activations, gradients):
@@ -41,14 +43,8 @@ class GradCAM:
         return heatmap
 
     def explain(self, image):
-        """
-        Explains the image by superimposing a heatmap.
-
-        :param image:
-        :return: (prediction, explanation), where explanation is the superimposed image
-        """
         # predict
-        prediction, last_conv_activations, gradients = self._predict(image)
+        prediction, confidence, last_conv_activations, gradients = self._predict(image)
 
         # compute heatmap
         heatmap = self._make_heatmap(last_conv_activations, gradients)  # range [0, 1]
@@ -65,4 +61,4 @@ class GradCAM:
         # superimposed image
         superimposed_image = jet_heatmap * 0.4 + image
         superimposed_image /= np.max(superimposed_image)    # range [0, 1] (for plt.imshow())
-        return prediction, superimposed_image
+        return prediction, confidence, superimposed_image

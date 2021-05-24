@@ -49,7 +49,7 @@ def explain(model, dataset, dataset_info, output_path, explainer):
             for image, label in zip(images, labels):
                 bar.update()
 
-                prediction, explanation = explainer.explain(image)
+                prediction, confidence, explanation = explainer.explain(image)
                 label = np.argmax(label)
                 save_path = output_path / (class_names[label] + '_{:05d}'.format(count[label]) + '.png')
                 plot_explanation(image, explanation, class_names[prediction], class_names[label], save_path=save_path)

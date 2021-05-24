@@ -43,6 +43,7 @@ class COVIDNet(Model):
     - No activation and batch normalization for the convolutional layers.
     - Inputs rescaled to the range [-1,1].
     """
+    _image_shape = (224, 224, 3)
 
     def __init__(self, n_classes, name='covidnet', weights=None):
         """
@@ -51,7 +52,6 @@ class COVIDNet(Model):
         :param weights: path to the pretrained weights to load
         """
         super().__init__(name=name)
-        self._image_shape = (224, 224, 3)
         self._n_classes = n_classes
         self._transfer_learning = weights is not None
 
