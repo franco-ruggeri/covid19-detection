@@ -2,12 +2,12 @@
 This project is part of the course DD2424 Deep Learning in Data Science at KTH. The goal is to train a classifier for COVID-19 detection from chest X-ray (CXR) images and boost it with explainability. More information can be found in the [report](https://github.com/franco-ruggeri/dd2424-covid19-detection/blob/master/docs/report.pdf). Also check out our [presentation](https://www.youtube.com/watch?v=c1TNhvAmddE&feature=youtu.be).
 
 This repository can be used in two different ways:
-- As a package in Python code, through a Keras-like API, using the [covid19](covid19) package. All the classes are documented.
-- As a standalone application, using the [Qt application](scripts/predict.py). New models can also be trained and tested using the [scripts](scripts). All the scripts provide documentation for the arguments.
+- As a [package](#1-python-package) in Python code, through a Keras-like API, using the [covid19](covid19) package. All the classes are documented.
+- As a [standalone application](#2-standalone-application), using the [Qt application](scripts/predict.py). New models can also be trained and tested using the [scripts](scripts). All the scripts provide documentation for the arguments.
 
 ## 1. Python package
 
-### 1.1 How to install
+### 1.1 Install
 The package is distributed on [PyPi](https://pypi.org/), so can be installed with:
 ```
 pip install covid19-detection
@@ -33,43 +33,44 @@ train_ds, train_ds_info = image_dataset_from_directory('path/to/COVIDx/train')
 val_ds, _ = image_dataset_from_directory('path/to/COVIDx/validation')
 model = COVIDNet(train_ds_info['n_classes'])
 history = model.compile_and_fit(1e-4, 'cross_entropy', ['accuracy'], train_ds, val_ds, 30, 0, [])
-model.save_weights('path/to/save/model)
+model.save_weights('path/to/save/model')
 plot_learning_curves(history, save_path='path/to/save/learning_curves)
 ```
 
 ## 2. Standalone application
 
-### 2.1 Clone the repository
+### 2.1 Setup
 First, you need to clone the repository:
 ```
 git clone https://github.com/franco-ruggeri/dd2424-covid19-detection.git
 cd dd2424-covid19-detection
 ```
 
-### 2.2 Prepare conda environment
-If you do not have it yet, download [conda](https://docs.conda.io/en/latest/) following the official instructions.
-
-After that, create a new conda environment and install the dependencies:
+Second, you need to install the dependencies. For this, download [conda](https://docs.conda.io/en/latest/) following the official instructions and execute the following commands:
 ```
 conda create --name covid19-detection tensorflow
 conda activate covid19-detection
 pip install -r requirements.txt
 ```
 
-### 2.3 Download the models
-Create a *models* directory:
+The Qt application expects to find a ResNet50 and a COVID-Net in the *models* directory. Create the directory:
 ```
 mkdir models
 ```
-Then, download the [best models](https://drive.google.com/drive/folders/1x7_xh1xNcuvT8j29y7pTyk_3nrFHNZd2?usp=sharing) we trained into that directory. The Qt application expects to find a ResNet50 and a COVID-Net exactly in that location. 
+Then, download the [best models](https://drive.google.com/drive/folders/1x7_xh1xNcuvT8j29y7pTyk_3nrFHNZd2?usp=sharing) we trained into that location. Alternatively, you can [train your own models](#23-train-and-test-models) as described below and put them there with the same names as the best models.
 
-### 2.4 Launch Qt application
+### 2.2 Launch Qt application
+Every time you open a new terminal, you need to activate the conda environment:
+```
+conda activate covid19-detection
+```
+
 Now you are ready to launch the Qt application:
 ```
 python scripts/predict.py
 ```
 
-### 2.5 Train and test models
+### 2.3 Train and test models
 The following scripts allow training and testing your own ResNet50 and COVID-Net:
 - generate_dataset: generates a dataset supported in covid19.datasets with training, validation and test splits.
 - examine_dataset: generates a plot with the data distribution for a dataset supported in covid19.datasets.
@@ -83,7 +84,7 @@ A detailed description of the arguments and options of these scripts can be obta
 python <script>.py -h
 ```
 
-### 2.6 Example of usage
+### 2.4 Example of usage
 Here are some examples of usage of the scripts:
 ```
 # pretrain ResNet50 on HAM10000
