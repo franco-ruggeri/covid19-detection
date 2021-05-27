@@ -18,7 +18,7 @@ class Ui_Client(object):
     def setupUi(self, Client):
         if not Client.objectName():
             Client.setObjectName(u"Client")
-        Client.resize(1450, 1022)
+        Client.resize(1450, 1049)
         icon = QIcon()
         icon.addFile(u":/images/logo.jpeg", QSize(), QIcon.Normal, QIcon.Off)
         Client.setWindowIcon(icon)
@@ -80,6 +80,7 @@ class Ui_Client(object):
         self.explanation.setMinimumSize(QSize(640, 640))
         self.explanation.setMaximumSize(QSize(640, 640))
         self.explanation.setPixmap(QPixmap(u":/images/default.png"))
+        self.explanation.setScaledContents(True)
 
         self.verticalLayout_2.addWidget(self.explanation)
 
@@ -135,6 +136,7 @@ class Ui_Client(object):
         self.input.setMinimumSize(QSize(640, 640))
         self.input.setMaximumSize(QSize(640, 640))
         self.input.setPixmap(QPixmap(u":/images/default.png"))
+        self.input.setScaledContents(True)
 
         self.verticalLayout.addWidget(self.input)
 
@@ -145,50 +147,101 @@ class Ui_Client(object):
         self.settings.setObjectName(u"settings")
         self.formLayout = QFormLayout(self.settings)
         self.formLayout.setObjectName(u"formLayout")
-        self.image_label = QLabel(self.settings)
-        self.image_label.setObjectName(u"image_label")
+        self.horizontalLayout = QHBoxLayout()
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.input_state = QLabel(self.settings)
+        self.input_state.setObjectName(u"input_state")
+        self.input_state.setMinimumSize(QSize(50, 50))
+        self.input_state.setMaximumSize(QSize(50, 50))
+        self.input_state.setPixmap(QPixmap(u":/images/error.png"))
+        self.input_state.setScaledContents(True)
 
-        self.formLayout.setWidget(0, QFormLayout.LabelRole, self.image_label)
+        self.horizontalLayout.addWidget(self.input_state)
+
+        self.select_image_label = QLabel(self.settings)
+        self.select_image_label.setObjectName(u"select_image_label")
+        self.select_image_label.setMinimumSize(QSize(0, 50))
+        self.select_image_label.setMaximumSize(QSize(16777215, 50))
+
+        self.horizontalLayout.addWidget(self.select_image_label)
+
+
+        self.formLayout.setLayout(2, QFormLayout.LabelRole, self.horizontalLayout)
 
         self.select_image = QPushButton(self.settings)
         self.select_image.setObjectName(u"select_image")
+        self.select_image.setMinimumSize(QSize(0, 50))
         self.select_image.setMaximumSize(QSize(200, 50))
 
-        self.formLayout.setWidget(0, QFormLayout.FieldRole, self.select_image)
+        self.formLayout.setWidget(2, QFormLayout.FieldRole, self.select_image)
 
-        self.architecture_label = QLabel(self.settings)
-        self.architecture_label.setObjectName(u"architecture_label")
+        self.predict = QPushButton(self.settings)
+        self.predict.setObjectName(u"predict")
+        self.predict.setEnabled(True)
+        self.predict.setMinimumSize(QSize(0, 0))
+        self.predict.setMaximumSize(QSize(200, 50))
 
-        self.formLayout.setWidget(1, QFormLayout.LabelRole, self.architecture_label)
-
-        self.architecture = QComboBox(self.settings)
-        self.architecture.addItem("")
-        self.architecture.addItem("")
-        self.architecture.setObjectName(u"architecture")
-        self.architecture.setMaximumSize(QSize(200, 50))
-
-        self.formLayout.setWidget(1, QFormLayout.FieldRole, self.architecture)
-
-        self.explainer_label = QLabel(self.settings)
-        self.explainer_label.setObjectName(u"explainer_label")
-
-        self.formLayout.setWidget(2, QFormLayout.LabelRole, self.explainer_label)
+        self.formLayout.setWidget(7, QFormLayout.FieldRole, self.predict)
 
         self.explainer = QComboBox(self.settings)
         self.explainer.addItem("")
         self.explainer.addItem("")
         self.explainer.setObjectName(u"explainer")
+        self.explainer.setMinimumSize(QSize(0, 50))
         self.explainer.setMaximumSize(QSize(200, 50))
 
-        self.formLayout.setWidget(2, QFormLayout.FieldRole, self.explainer)
+        self.formLayout.setWidget(6, QFormLayout.FieldRole, self.explainer)
 
-        self.predict = QPushButton(self.settings)
-        self.predict.setObjectName(u"predict")
-        self.predict.setEnabled(False)
-        self.predict.setMinimumSize(QSize(0, 0))
-        self.predict.setMaximumSize(QSize(200, 50))
+        self.horizontalLayout_3 = QHBoxLayout()
+        self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
+        self.explainer_state = QLabel(self.settings)
+        self.explainer_state.setObjectName(u"explainer_state")
+        self.explainer_state.setMinimumSize(QSize(50, 50))
+        self.explainer_state.setMaximumSize(QSize(50, 50))
+        self.explainer_state.setPixmap(QPixmap(u":/images/error.png"))
+        self.explainer_state.setScaledContents(True)
 
-        self.formLayout.setWidget(3, QFormLayout.FieldRole, self.predict)
+        self.horizontalLayout_3.addWidget(self.explainer_state)
+
+        self.explainaer_label = QLabel(self.settings)
+        self.explainaer_label.setObjectName(u"explainaer_label")
+        self.explainaer_label.setMinimumSize(QSize(0, 50))
+        self.explainaer_label.setMaximumSize(QSize(16777215, 50))
+
+        self.horizontalLayout_3.addWidget(self.explainaer_label)
+
+
+        self.formLayout.setLayout(6, QFormLayout.LabelRole, self.horizontalLayout_3)
+
+        self.model = QComboBox(self.settings)
+        self.model.addItem("")
+        self.model.addItem("")
+        self.model.setObjectName(u"model")
+        self.model.setMinimumSize(QSize(0, 50))
+        self.model.setMaximumSize(QSize(200, 50))
+
+        self.formLayout.setWidget(5, QFormLayout.FieldRole, self.model)
+
+        self.horizontalLayout_2 = QHBoxLayout()
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.model_state = QLabel(self.settings)
+        self.model_state.setObjectName(u"model_state")
+        self.model_state.setMinimumSize(QSize(50, 50))
+        self.model_state.setMaximumSize(QSize(50, 50))
+        self.model_state.setPixmap(QPixmap(u":/images/error.png"))
+        self.model_state.setScaledContents(True)
+
+        self.horizontalLayout_2.addWidget(self.model_state)
+
+        self.model_label = QLabel(self.settings)
+        self.model_label.setObjectName(u"model_label")
+        self.model_label.setMinimumSize(QSize(0, 50))
+        self.model_label.setMaximumSize(QSize(16777215, 50))
+
+        self.horizontalLayout_2.addWidget(self.model_label)
+
+
+        self.formLayout.setLayout(5, QFormLayout.LabelRole, self.horizontalLayout_2)
 
 
         self.input_panel.addWidget(self.settings)
@@ -227,7 +280,7 @@ class Ui_Client(object):
     # setupUi
 
     def retranslateUi(self, Client):
-        Client.setWindowTitle(QCoreApplication.translate("Client", u"MainWindow", None))
+        Client.setWindowTitle(QCoreApplication.translate("Client", u"COVID-19 Detector", None))
         self.explanation_label.setText(QCoreApplication.translate("Client", u"Explanation", None))
         self.explanation.setText("")
         self.results.setTitle(QCoreApplication.translate("Client", u"Results", None))
@@ -238,16 +291,19 @@ class Ui_Client(object):
         self.input_label.setText(QCoreApplication.translate("Client", u"Chest X-Ray Image", None))
         self.input.setText("")
         self.settings.setTitle(QCoreApplication.translate("Client", u"Settings", None))
-        self.image_label.setText(QCoreApplication.translate("Client", u"Input image:", None))
+        self.input_state.setText("")
+        self.select_image_label.setText(QCoreApplication.translate("Client", u"Input image:", None))
         self.select_image.setText(QCoreApplication.translate("Client", u"Select image", None))
-        self.architecture_label.setText(QCoreApplication.translate("Client", u"Architecture:", None))
-        self.architecture.setItemText(0, QCoreApplication.translate("Client", u"ResNet50", None))
-        self.architecture.setItemText(1, QCoreApplication.translate("Client", u"COVID-Net", None))
-
-        self.explainer_label.setText(QCoreApplication.translate("Client", u"Explainer:", None))
+        self.predict.setText(QCoreApplication.translate("Client", u"Predict", None))
         self.explainer.setItemText(0, QCoreApplication.translate("Client", u"Grad-CAM", None))
         self.explainer.setItemText(1, QCoreApplication.translate("Client", u"Integrated Gradients", None))
 
-        self.predict.setText(QCoreApplication.translate("Client", u"Predict", None))
+        self.explainer_state.setText("")
+        self.explainaer_label.setText(QCoreApplication.translate("Client", u"Explainer:", None))
+        self.model.setItemText(0, QCoreApplication.translate("Client", u"ResNet50", None))
+        self.model.setItemText(1, QCoreApplication.translate("Client", u"COVID-Net", None))
+
+        self.model_state.setText("")
+        self.model_label.setText(QCoreApplication.translate("Client", u"Model:", None))
     # retranslateUi
 
