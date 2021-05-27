@@ -1,7 +1,16 @@
+#!/usr/bin/env python3
+
 import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
+
+
+def get_command_line_arguments():
+    parser = argparse.ArgumentParser(description='Examine dataset.')
+    parser.add_argument('data', type=str, help='path to the dataset')
+    parser.add_argument('output', type=str, help='path where to save the dataset stats')
+    return parser.parse_args()
 
 
 def get_stats(dataset_path):
@@ -58,10 +67,7 @@ def plot_stats(stats, class_names, save_path):
 
 def main():
     # command-line arguments
-    parser = argparse.ArgumentParser(description='Examine dataset.')
-    parser.add_argument('data', type=str, help='path to the dataset')
-    parser.add_argument('output', type=str, help='path where to save the dataset stats')
-    args = parser.parse_args()
+    args = get_command_line_arguments()
 
     # prepare paths
     dataset_path = Path(args.data)

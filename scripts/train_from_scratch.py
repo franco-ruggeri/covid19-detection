@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse
 from utils import get_model, get_callbacks, get_class_weights, IMAGE_SIZE
 from pathlib import Path

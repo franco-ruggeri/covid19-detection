@@ -1,15 +1,21 @@
+#!/usr/bin/env python3
+
 import argparse
 from pathlib import Path
 from covid19.datasets import generate_covidx, generate_ham10000
 
 
-def main():
-    # command-line arguments
+def get_command_line_arguments():
     parser = argparse.ArgumentParser(description='Generate dataset and split it in train, validation and test sets.')
     parser.add_argument('name', type=str, help='name of the dataset. Supported: covidx, ham10000.')
     parser.add_argument('data', type=str, help='path to the source datasets')
     parser.add_argument('output', type=str, help='path where to store the dataset')
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+def main():
+    # command-line arguments
+    args = get_command_line_arguments()
 
     # prepare paths
     dataset_path = Path(args.data)
