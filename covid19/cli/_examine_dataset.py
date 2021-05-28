@@ -1,14 +1,11 @@
-import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 
 
-def _get_arguments():
-    parser = argparse.ArgumentParser(description='Examine dataset.')
+def add_arguments_examine_dataset(parser):
     parser.add_argument('data', type=str, help='path to the dataset')
     parser.add_argument('output', type=str, help='path where to save the dataset stats')
-    return parser.parse_args()
 
 
 def _get_stats(dataset_path):
@@ -63,10 +60,7 @@ def _plot_stats(stats, class_names, save_path):
     plt.show()
 
 
-def examine_dataset():
-    # command-line arguments
-    args = _get_arguments()
-
+def examine_dataset(args):
     # prepare paths
     dataset_path = Path(args.data)
     output_path = Path(args.output)

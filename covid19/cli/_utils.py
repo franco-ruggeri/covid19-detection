@@ -1,9 +1,4 @@
-import sys
 from covid19.models import ResNet50, COVIDNet
-
-
-def discard_argument():
-    sys.argv = sys.argv[1:]
 
 
 def get_model(architecture, weights, n_classes, load_weights):

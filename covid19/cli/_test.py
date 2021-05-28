@@ -1,4 +1,3 @@
-import argparse
 import numpy as np
 import tensorflow as tf
 from tqdm import tqdm
@@ -9,9 +8,7 @@ from covid19.explainers import GradCAM, IG, plot_explanation
 from covid19.cli._utils import get_model, get_image_size
 
 
-def _get_arguments():
-    parser = argparse.ArgumentParser(description='Test COVID-19 detection model.',
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+def add_arguments_test(parser):
     parser.add_argument('data', type=str, help='path to the dataset')
     parser.add_argument('output', type=str, help='path where to save the results')
     parser.add_argument('--model', type=str,
@@ -23,7 +20,6 @@ def _get_arguments():
                         help='type of evaluation.')
     parser.add_argument('--explainer', type=str, default='gradcam', choices=['gradcam', 'ig'], help='explainer to use')
     parser.add_argument('--verbose', type=int, default=2, help='verbosity level of the output')
-    return parser.parse_args()
 
 
 def _evaluate(model, dataset, dataset_info, output_path, verbose):
@@ -74,10 +70,7 @@ def _explain(model, dataset, dataset_info, output_path, explainer):
                                  save_path=save_path)
 
 
-def test():
-    # command-line arguments
-    args = _get_arguments()
-
+def test(args):
     # prepare paths
     dataset_path = Path(args.data) / 'test'
     output_path = Path(args.output)

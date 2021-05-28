@@ -1,20 +1,12 @@
-import argparse
 import numpy as np
 from pathlib import Path
 from covid19.datasets import image_dataset_from_directory
 from covid19.metrics import plot_learning_curves
-from covid19.cli._utils import discard_argument, get_model, get_image_size
+from covid19.cli._utils import get_model, get_image_size
 from tensorflow.keras.callbacks import ModelCheckpoint, TensorBoard
 from tensorflow.keras.metrics import CategoricalAccuracy, AUC, Precision, Recall
 from tensorflow_addons.metrics import F1Score
 from tensorflow.keras.layers import Dense
-
-
-def _get_mode():
-    parser = argparse.ArgumentParser(description='Train COVID-19 detection model.',
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('mode', type=str, choices=['from_scratch', 'transfer_learning'], help='mode to use')
-    return parser.parse_args()
 
 
 def _add_arguments_common(parser):
@@ -33,19 +25,14 @@ def _add_arguments_common(parser):
     parser.add_argument('--verbose', type=int, default=2, help='verbosity level of the output')
 
 
-def _get_arguments_from_scratch():
-    parser = argparse.ArgumentParser(description='Train COVID-19 detection model from scratch.',
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+def _add_arguments_from_scratch(parser):
     parser.add_argument('data', type=str, help='path to the dataset')
     parser.add_argument('model', type=str,
                         help='path where to save the training output (e.g., trained model), must not exist')
     _add_arguments_common(parser)
-    return parser.parse_args()
 
 
-def _get_arguments_transfer_learning():
-    parser = argparse.ArgumentParser(description='Train COVID-19 detection model with transfer learning.',
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+def _add_arguments_transfer_learning(parser):
     parser.add_argument('data', type=str, help='path to the dataset')
     parser.add_argument('model', type=str,
                         help='path where to save the training output (e.g., trained model), must not exist')
@@ -56,7 +43,15 @@ def _get_arguments_transfer_learning():
     parser.add_argument('--learning-rate-ft', type=float, default=1e-6, help='learning rate for fine-tuning')
     parser.add_argument('--fine-tune-at', type=int, default=0, help='index of layer at which to start to unfreeze')
     _add_arguments_common(parser)
-    return parser.parse_args()
+
+
+def add_arguments_train(parser):
+    subparsers = parser.add_subparsers()
+    parser_from_scratch = subparsers.add_parser('from_scratch')
+    parser_transfer_learning = subparsers.add_parser('transfer_learning')
+
+    _add_arguments_from_scratch(parser_from_scratch)
+    _add_arguments_transfer_learning(parser_transfer_learning)
 
 
 def _get_metrics(dataset_info):
@@ -97,18 +92,7 @@ def _get_class_weights(train_ds_info):
     return class_weights
 
 
-def train():
-    # command-line arguments
-    args = _get_mode()
-    mode = args.mode
-    discard_argument()
-    if mode == 'from_scratch':
-        args = _get_arguments_from_scratch()
-    elif mode == 'transfer_learning':
-        args = _get_arguments_transfer_learning()
-    else:
-        raise ValueError
-
+def train(args):
     # prepare paths
     dataset_path = Path(args.data)
     models_path = Path(args.model)
@@ -135,9 +119,7 @@ def train():
     class_weights = _get_class_weights(train_ds_info) if args.class_weights else None
 
     # train
-    args = _get_mode()
-    discard_argument()
-    if mode == 'from_scratch':
+    if args.mode == 'from_scratch':
         # train whole model from scratch
         model = get_model(args.architecture, None, n_classes, args.load_weights)
         history = model.compile_and_fit(
@@ -154,7 +136,7 @@ def train():
         model.save_weights(str(models_path / 'model'))
         plot_learning_curves(history, save_path=plots_path)
 
-    elif mode == 'transfer_learning':
+    elif args.mode == 'transfer_learning':
         # replace last layer with the right number of units
         model = get_model(args.architecture, args.weights, args.n_classes_pretrain, args.load_weights)
         model.classifier.pop()
