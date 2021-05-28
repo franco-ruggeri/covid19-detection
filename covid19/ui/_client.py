@@ -36,7 +36,7 @@ class Client(QMainWindow):
         self._model_loaded = False
         self._explainer = None
         self._input = None
-        self._input_predicted = True
+        self._input_predicted = False
 
         self.ui = Ui_Client()
         self.ui.setupUi(self)
@@ -138,5 +138,5 @@ class Client(QMainWindow):
 
     @Slot()
     def _refresh_predict(self):
-        enabled = self._model_loaded and not self._input_predicted
+        enabled = self._model_loaded and not self._input_predicted and self._input is not None
         self.ui.predict.setEnabled(enabled)
