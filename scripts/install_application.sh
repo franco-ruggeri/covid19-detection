@@ -1,5 +1,18 @@
 #!/bin/bash
 
+gdrive_download_large () {
+  fileid=$1
+  filename=$2
+  confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate "https://docs.google.com/uc?export=download&id=$fileid" -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')
+  wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$confirm&id=$fileid" -O $filename && rm -rf /tmp/cookies.txt
+}
+
+gdrive_download_small () {
+  fileid=$1
+  filename=$2
+  wget --no-check-certificate "https://docs.google.com/uc?export=download&id=$fileid" -O $filename
+}
+
 # get project path 
 cd "$(dirname $0)/.."
 project_dir=$(pwd)
@@ -15,12 +28,12 @@ models_dir=$project_dir/models
 rm -rf "$models_dir"
 mkdir "$models_dir"
 cd "$models_dir"
-wget -q "https://drive.google.com/uc?export=download&id=1bSs0-zSWZP2cPH25CQZkVrX9pgEdrxpl" -O resnet50.index
-wget -q "https://drive.google.com/uc?export=download&id=1v0j4psCHLMLMMZTg4R74ASAR_dwrULlW" -O resnet50.data-00001-of-00002
-wget -q "https://drive.google.com/uc?export=download&id=1vPQG2Q84DN8dnReMRnF09X9ZkCAkdQ22" -O resnet50.data-00000-of-00002
-wget -q "https://drive.google.com/uc?export=download&id=1wDyo9jVwxwqO2OpCIFpmgKNLj7Fd1WCg" -O covidnet.index
-wget -q "https://drive.google.com/uc?export=download&id=1ReHiskVQvuISJWHJjf7ne2zepmIyZiGP" -O covidnet.data-00001-of-00002
-wget -q "https://drive.google.com/uc?export=download&id=1SyZ-Y9_xHPrnZ2WzaNpiMOsqm_9rwqc7" -O covidnet.data-00000-of-00002
+gdrive_download_small 1bSs0-zSWZP2cPH25CQZkVrX9pgEdrxpl resnet50.index
+gdrive_download_large 1v0j4psCHLMLMMZTg4R74ASAR_dwrULlW resnet50.data-00001-of-00002
+gdrive_download_small 1vPQG2Q84DN8dnReMRnF09X9ZkCAkdQ22 resnet50.data-00000-of-00002
+gdrive_download_small 1wDyo9jVwxwqO2OpCIFpmgKNLj7Fd1WCg covidnet.index
+gdrive_download_large 1ReHiskVQvuISJWHJjf7ne2zepmIyZiGP covidnet.data-00001-of-00002
+gdrive_download_small 1SyZ-Y9_xHPrnZ2WzaNpiMOsqm_9rwqc7 covidnet.data-00000-of-00002
 
 # create desktop entry
 cd ~/.local/share/applications
