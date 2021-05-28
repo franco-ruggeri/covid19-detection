@@ -26,35 +26,39 @@ class Ui_Client(object):
 "	font-size: 18px;\n"
 "}\n"
 "\n"
-"QPushButton#predict {\n"
-"	background-color: rgb(75, 116, 22);\n"
+"QPushButton {\n"
 "	border-radius: 10px;\n"
-"	color: white;\n"
 "	padding: 5px;\n"
 "}\n"
 "\n"
-"QPushButton#predict:hover {\n"
-"	background-color: rgb(22, 57, 9);\n"
-"}\n"
-"\n"
-"QPushButton#predict:pressed {\n"
+"QPushButton:pressed {\n"
 "	border-radius: 12px;\n"
 "}\n"
 "\n"
+"QPushButton#predict {\n"
+"	background-color: rgb(239, 41, 41);\n"
+"	color: white;\n"
+"}\n"
+"\n"
+"QPushButton#predict:hover {\n"
+"	background-color: rgb(164, 0, 0);\n"
+"}\n"
+"\n"
 "QPushButton#predict:disabled {\n"
-"	background-color: rgba(75, 116, 22, 50%)\n"
+"	background-color: rgb(197, 114, 114)\n"
 "}\n"
 "\n"
 "QPushButton#select_image {\n"
-"	padding: 5px;\n"
+"	background-color: rgb(75, 116, 22);\n"
+"	color: white;\n"
 "}\n"
 "\n"
 "QPushButton#select_image:hover {\n"
-"	background-color: rgb(136, 138, 133);\n"
+"	background-color: rgb(22, 57, 9);\n"
 "}\n"
 "\n"
-"QPushButton#select_image:pressed {\n"
-"	border-radius: 5px;\n"
+"QPushButton#select_image:disabled {\n"
+"	background-color: rgba(75, 116, 22, 50%)\n"
 "}\n"
 "\n"
 "QGroupBox * {\n"
@@ -147,50 +151,35 @@ class Ui_Client(object):
         self.settings.setObjectName(u"settings")
         self.formLayout = QFormLayout(self.settings)
         self.formLayout.setObjectName(u"formLayout")
-        self.horizontalLayout = QHBoxLayout()
-        self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.input_state = QLabel(self.settings)
-        self.input_state.setObjectName(u"input_state")
-        self.input_state.setMinimumSize(QSize(50, 50))
-        self.input_state.setMaximumSize(QSize(50, 50))
-        self.input_state.setPixmap(QPixmap(u":/images/error.png"))
-        self.input_state.setScaledContents(True)
+        self.horizontalLayout_2 = QHBoxLayout()
+        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
+        self.model_state = QLabel(self.settings)
+        self.model_state.setObjectName(u"model_state")
+        self.model_state.setMinimumSize(QSize(50, 50))
+        self.model_state.setMaximumSize(QSize(50, 50))
+        self.model_state.setPixmap(QPixmap(u":/images/error.png"))
+        self.model_state.setScaledContents(True)
 
-        self.horizontalLayout.addWidget(self.input_state)
+        self.horizontalLayout_2.addWidget(self.model_state)
 
-        self.select_image_label = QLabel(self.settings)
-        self.select_image_label.setObjectName(u"select_image_label")
-        self.select_image_label.setMinimumSize(QSize(0, 50))
-        self.select_image_label.setMaximumSize(QSize(16777215, 50))
+        self.model_label = QLabel(self.settings)
+        self.model_label.setObjectName(u"model_label")
+        self.model_label.setMinimumSize(QSize(0, 50))
+        self.model_label.setMaximumSize(QSize(16777215, 50))
 
-        self.horizontalLayout.addWidget(self.select_image_label)
+        self.horizontalLayout_2.addWidget(self.model_label)
 
 
-        self.formLayout.setLayout(2, QFormLayout.LabelRole, self.horizontalLayout)
+        self.formLayout.setLayout(5, QFormLayout.LabelRole, self.horizontalLayout_2)
 
-        self.select_image = QPushButton(self.settings)
-        self.select_image.setObjectName(u"select_image")
-        self.select_image.setMinimumSize(QSize(0, 50))
-        self.select_image.setMaximumSize(QSize(200, 50))
+        self.model = QComboBox(self.settings)
+        self.model.addItem("")
+        self.model.addItem("")
+        self.model.setObjectName(u"model")
+        self.model.setMinimumSize(QSize(0, 50))
+        self.model.setMaximumSize(QSize(250, 50))
 
-        self.formLayout.setWidget(2, QFormLayout.FieldRole, self.select_image)
-
-        self.predict = QPushButton(self.settings)
-        self.predict.setObjectName(u"predict")
-        self.predict.setEnabled(True)
-        self.predict.setMinimumSize(QSize(0, 0))
-        self.predict.setMaximumSize(QSize(200, 50))
-
-        self.formLayout.setWidget(7, QFormLayout.FieldRole, self.predict)
-
-        self.explainer = QComboBox(self.settings)
-        self.explainer.addItem("")
-        self.explainer.addItem("")
-        self.explainer.setObjectName(u"explainer")
-        self.explainer.setMinimumSize(QSize(0, 50))
-        self.explainer.setMaximumSize(QSize(200, 50))
-
-        self.formLayout.setWidget(6, QFormLayout.FieldRole, self.explainer)
+        self.formLayout.setWidget(5, QFormLayout.FieldRole, self.model)
 
         self.horizontalLayout_3 = QHBoxLayout()
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
@@ -213,35 +202,51 @@ class Ui_Client(object):
 
         self.formLayout.setLayout(6, QFormLayout.LabelRole, self.horizontalLayout_3)
 
-        self.model = QComboBox(self.settings)
-        self.model.addItem("")
-        self.model.addItem("")
-        self.model.setObjectName(u"model")
-        self.model.setMinimumSize(QSize(0, 50))
-        self.model.setMaximumSize(QSize(200, 50))
+        self.explainer = QComboBox(self.settings)
+        self.explainer.addItem("")
+        self.explainer.addItem("")
+        self.explainer.setObjectName(u"explainer")
+        self.explainer.setMinimumSize(QSize(0, 50))
+        self.explainer.setMaximumSize(QSize(250, 50))
 
-        self.formLayout.setWidget(5, QFormLayout.FieldRole, self.model)
+        self.formLayout.setWidget(6, QFormLayout.FieldRole, self.explainer)
 
-        self.horizontalLayout_2 = QHBoxLayout()
-        self.horizontalLayout_2.setObjectName(u"horizontalLayout_2")
-        self.model_state = QLabel(self.settings)
-        self.model_state.setObjectName(u"model_state")
-        self.model_state.setMinimumSize(QSize(50, 50))
-        self.model_state.setMaximumSize(QSize(50, 50))
-        self.model_state.setPixmap(QPixmap(u":/images/error.png"))
-        self.model_state.setScaledContents(True)
+        self.predict = QPushButton(self.settings)
+        self.predict.setObjectName(u"predict")
+        self.predict.setEnabled(True)
+        self.predict.setMinimumSize(QSize(0, 50))
+        self.predict.setMaximumSize(QSize(200, 50))
 
-        self.horizontalLayout_2.addWidget(self.model_state)
+        self.formLayout.setWidget(8, QFormLayout.FieldRole, self.predict)
 
-        self.model_label = QLabel(self.settings)
-        self.model_label.setObjectName(u"model_label")
-        self.model_label.setMinimumSize(QSize(0, 50))
-        self.model_label.setMaximumSize(QSize(16777215, 50))
+        self.horizontalLayout = QHBoxLayout()
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.input_state = QLabel(self.settings)
+        self.input_state.setObjectName(u"input_state")
+        self.input_state.setMinimumSize(QSize(50, 50))
+        self.input_state.setMaximumSize(QSize(50, 50))
+        self.input_state.setPixmap(QPixmap(u":/images/error.png"))
+        self.input_state.setScaledContents(True)
 
-        self.horizontalLayout_2.addWidget(self.model_label)
+        self.horizontalLayout.addWidget(self.input_state)
+
+        self.select_image_label = QLabel(self.settings)
+        self.select_image_label.setObjectName(u"select_image_label")
+        self.select_image_label.setMinimumSize(QSize(0, 50))
+        self.select_image_label.setMaximumSize(QSize(16777215, 50))
+
+        self.horizontalLayout.addWidget(self.select_image_label)
 
 
-        self.formLayout.setLayout(5, QFormLayout.LabelRole, self.horizontalLayout_2)
+        self.formLayout.setLayout(7, QFormLayout.LabelRole, self.horizontalLayout)
+
+        self.select_image = QPushButton(self.settings)
+        self.select_image.setObjectName(u"select_image")
+        self.select_image.setEnabled(True)
+        self.select_image.setMinimumSize(QSize(0, 50))
+        self.select_image.setMaximumSize(QSize(200, 50))
+
+        self.formLayout.setWidget(7, QFormLayout.FieldRole, self.select_image)
 
 
         self.input_panel.addWidget(self.settings)
@@ -291,19 +296,19 @@ class Ui_Client(object):
         self.input_label.setText(QCoreApplication.translate("Client", u"Chest X-Ray Image", None))
         self.input.setText("")
         self.settings.setTitle(QCoreApplication.translate("Client", u"Settings", None))
-        self.input_state.setText("")
-        self.select_image_label.setText(QCoreApplication.translate("Client", u"Input image:", None))
-        self.select_image.setText(QCoreApplication.translate("Client", u"Select image", None))
-        self.predict.setText(QCoreApplication.translate("Client", u"Predict", None))
-        self.explainer.setItemText(0, QCoreApplication.translate("Client", u"Grad-CAM", None))
-        self.explainer.setItemText(1, QCoreApplication.translate("Client", u"Integrated Gradients", None))
-
-        self.explainer_state.setText("")
-        self.explainaer_label.setText(QCoreApplication.translate("Client", u"Explainer:", None))
+        self.model_state.setText("")
+        self.model_label.setText(QCoreApplication.translate("Client", u"Model:", None))
         self.model.setItemText(0, QCoreApplication.translate("Client", u"ResNet50", None))
         self.model.setItemText(1, QCoreApplication.translate("Client", u"COVID-Net", None))
 
-        self.model_state.setText("")
-        self.model_label.setText(QCoreApplication.translate("Client", u"Model:", None))
+        self.explainer_state.setText("")
+        self.explainaer_label.setText(QCoreApplication.translate("Client", u"Explainer:", None))
+        self.explainer.setItemText(0, QCoreApplication.translate("Client", u"Grad-CAM", None))
+        self.explainer.setItemText(1, QCoreApplication.translate("Client", u"Integrated Gradients", None))
+
+        self.predict.setText(QCoreApplication.translate("Client", u"Predict", None))
+        self.input_state.setText("")
+        self.select_image_label.setText(QCoreApplication.translate("Client", u"Input image:", None))
+        self.select_image.setText(QCoreApplication.translate("Client", u"Select image", None))
     # retranslateUi
 

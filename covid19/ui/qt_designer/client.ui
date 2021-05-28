@@ -22,35 +22,39 @@
 	font-size: 18px;
 }
 
-QPushButton#predict {
-	background-color: rgb(75, 116, 22);
+QPushButton {
 	border-radius: 10px;
-	color: white;
 	padding: 5px;
 }
 
-QPushButton#predict:hover {
-	background-color: rgb(22, 57, 9);
-}
-
-QPushButton#predict:pressed {
+QPushButton:pressed {
 	border-radius: 12px;
 }
 
+QPushButton#predict {
+	background-color: rgb(239, 41, 41);
+	color: white;
+}
+
+QPushButton#predict:hover {
+	background-color: rgb(164, 0, 0);
+}
+
 QPushButton#predict:disabled {
-	background-color: rgba(75, 116, 22, 50%)
+	background-color: rgb(197, 114, 114)
 }
 
 QPushButton#select_image {
-	padding: 5px;
+	background-color: rgb(75, 116, 22);
+	color: white;
 }
 
 QPushButton#select_image:hover {
-	background-color: rgb(136, 138, 133);
+	background-color: rgb(22, 57, 9);
 }
 
-QPushButton#select_image:pressed {
-	border-radius: 5px;
+QPushButton#select_image:disabled {
+	background-color: rgba(75, 116, 22, 50%)
 }
 
 QGroupBox * {
@@ -200,10 +204,10 @@ QGroupBox * {
          <string>Settings</string>
         </property>
         <layout class="QFormLayout" name="formLayout">
-         <item row="2" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout">
+         <item row="5" column="0">
+          <layout class="QHBoxLayout" name="horizontalLayout_2">
            <item>
-            <widget class="QLabel" name="input_state">
+            <widget class="QLabel" name="model_state">
              <property name="minimumSize">
               <size>
                <width>50</width>
@@ -228,7 +232,7 @@ QGroupBox * {
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="select_image_label">
+            <widget class="QLabel" name="model_label">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -242,14 +246,14 @@ QGroupBox * {
               </size>
              </property>
              <property name="text">
-              <string>Input image:</string>
+              <string>Model:</string>
              </property>
             </widget>
            </item>
           </layout>
          </item>
-         <item row="2" column="1">
-          <widget class="QPushButton" name="select_image">
+         <item row="5" column="1">
+          <widget class="QComboBox" name="model">
            <property name="minimumSize">
             <size>
              <width>0</width>
@@ -258,59 +262,18 @@ QGroupBox * {
            </property>
            <property name="maximumSize">
             <size>
-             <width>200</width>
-             <height>50</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Select image</string>
-           </property>
-          </widget>
-         </item>
-         <item row="7" column="1">
-          <widget class="QPushButton" name="predict">
-           <property name="enabled">
-            <bool>true</bool>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>0</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>200</width>
-             <height>50</height>
-            </size>
-           </property>
-           <property name="text">
-            <string>Predict</string>
-           </property>
-          </widget>
-         </item>
-         <item row="6" column="1">
-          <widget class="QComboBox" name="explainer">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>50</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>200</width>
+             <width>250</width>
              <height>50</height>
             </size>
            </property>
            <item>
             <property name="text">
-             <string>Grad-CAM</string>
+             <string>ResNet50</string>
             </property>
            </item>
            <item>
             <property name="text">
-             <string>Integrated Gradients</string>
+             <string>COVID-Net</string>
             </property>
            </item>
           </widget>
@@ -363,8 +326,37 @@ QGroupBox * {
            </item>
           </layout>
          </item>
-         <item row="5" column="1">
-          <widget class="QComboBox" name="model">
+         <item row="6" column="1">
+          <widget class="QComboBox" name="explainer">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>50</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>250</width>
+             <height>50</height>
+            </size>
+           </property>
+           <item>
+            <property name="text">
+             <string>Grad-CAM</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>Integrated Gradients</string>
+            </property>
+           </item>
+          </widget>
+         </item>
+         <item row="8" column="1">
+          <widget class="QPushButton" name="predict">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
            <property name="minimumSize">
             <size>
              <width>0</width>
@@ -377,22 +369,15 @@ QGroupBox * {
              <height>50</height>
             </size>
            </property>
-           <item>
-            <property name="text">
-             <string>ResNet50</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>COVID-Net</string>
-            </property>
-           </item>
+           <property name="text">
+            <string>Predict</string>
+           </property>
           </widget>
          </item>
-         <item row="5" column="0">
-          <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item row="7" column="0">
+          <layout class="QHBoxLayout" name="horizontalLayout">
            <item>
-            <widget class="QLabel" name="model_state">
+            <widget class="QLabel" name="input_state">
              <property name="minimumSize">
               <size>
                <width>50</width>
@@ -417,7 +402,7 @@ QGroupBox * {
             </widget>
            </item>
            <item>
-            <widget class="QLabel" name="model_label">
+            <widget class="QLabel" name="select_image_label">
              <property name="minimumSize">
               <size>
                <width>0</width>
@@ -431,11 +416,33 @@ QGroupBox * {
               </size>
              </property>
              <property name="text">
-              <string>Model:</string>
+              <string>Input image:</string>
              </property>
             </widget>
            </item>
           </layout>
+         </item>
+         <item row="7" column="1">
+          <widget class="QPushButton" name="select_image">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>50</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>200</width>
+             <height>50</height>
+            </size>
+           </property>
+           <property name="text">
+            <string>Select image</string>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
