@@ -57,7 +57,8 @@ class Client(QMainWindow):
         print('Predicting... ', end='', flush=True)
         input_ = cv2.resize(self._input, self._model.image_shape[0:2])
         prediction, confidence, explanation = self._explainer.explain(input_)
-        explanation = (explanation * 255).astype(np.uint8)  # [0,1] -> [0,255]
+        explanation = (explanation * 255).astype(np.uint8)              # [0,1] -> [0,255]
+        explanation = cv2.cvtColor(explanation, cv2.COLOR_BGR2RGB)      # invert colors
         print('done')
 
         # update GUI
