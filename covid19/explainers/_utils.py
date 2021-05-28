@@ -24,8 +24,8 @@ def plot_explanation(original, explanation, prediction, confidence, ground_truth
     plt.imshow(explanation)
     plt.axis('off')
     plt.title('explanation')
-    plt.suptitle('Prediction: {} (Confidence: {:.2f%})\nGround truth: {}'
-                 .format(prediction, ground_truth, confidence*100))
+    plt.suptitle('Prediction: {} (Confidence: {:.2f}%)\nGround truth: {}'
+                 .format(prediction, confidence*100, ground_truth))
 
     if save_path is not None:
         plt.savefig(save_path)

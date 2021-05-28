@@ -65,9 +65,10 @@ def explain(model, dataset, dataset_info, output_path, explainer):
 
                 prediction, confidence, explanation = explainer.explain(image)
                 label = np.argmax(label)
-                save_path = output_path / (class_names[label] + '_{:05d}'.format(count[label]) + '.png')
-                plot_explanation(image, explanation, class_names[prediction], class_names[label], save_path=save_path)
                 count[label] += 1
+                save_path = output_path / (class_names[label] + '_{:05d}'.format(count[label]) + '.png')
+                plot_explanation(image, explanation, class_names[prediction], confidence, class_names[label],
+                                 save_path=save_path)
 
 
 def main():
