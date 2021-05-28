@@ -9,7 +9,7 @@ scripts = [str(script) for script in list(Path('scripts').iterdir())]
 
 setup(
     name='covid19-detection',
-    version='0.2.1',
+    version='0.2.2',
     description='Detection of COVID-19 from Chest X-Ray Images',
     long_description=long_description,
     long_description_content_type='text/markdown',

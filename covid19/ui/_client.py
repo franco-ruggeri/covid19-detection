@@ -36,7 +36,7 @@ class Client(QMainWindow):
         self._model_loaded = False
         self._explainer = None
         self._input = None
-        self._input_predicted = False
+        self._input_predicted = True
 
         self.ui = Ui_Client()
         self.ui.setupUi(self)
