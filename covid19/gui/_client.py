@@ -6,7 +6,7 @@ from pathlib import Path
 from PySide6.QtCore import Slot, QStandardPaths
 from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox
 from PySide6.QtGui import QPixmap
-from covid19.ui._ui_client import Ui_Client
+from covid19.gui._ui_client import Ui_Client
 from covid19.models import ResNet50, COVIDNet
 from covid19.explainers import GradCAM, IG
 
@@ -56,7 +56,7 @@ class Client(QMainWindow):
         # forward
         print('Predicting... ', end='', flush=True)
         input_ = cv2.resize(self._input, self._model.image_shape[0:2])
-        prediction, confidence, explanation = self._explainer.explain(input_)
+        prediction, confidence, explanation = self._explainer._explain(input_)
         explanation = (explanation * 255).astype(np.uint8)              # [0,1] -> [0,255]
         explanation = cv2.cvtColor(explanation, cv2.COLOR_BGR2RGB)      # invert colors
         print('done')

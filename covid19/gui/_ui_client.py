@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'client.ui'
+## Form generated from reading UI file 'client.gui'
 ##
 ## Created by: Qt User Interface Compiler version 6.1.0
 ##
@@ -12,7 +12,7 @@ from PySide6.QtCore import *
 from PySide6.QtGui import *
 from PySide6.QtWidgets import *
 
-import covid19.ui._resource_rc
+import covid19.gui._resource_rc
 
 class Ui_Client(object):
     def setupUi(self, Client):
