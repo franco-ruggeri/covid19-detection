@@ -11,3 +11,4 @@ scikit-learn~=0.23.2
 seaborn~=0.10.1
 xlrd~=1.2.0
 scipy~=1.4.1
+pyside6~=6.1.0

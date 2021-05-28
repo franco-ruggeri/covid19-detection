@@ -12,6 +12,7 @@ class ResNet50(Model):
     Inputs: batches of images with shape (None, 224, 224, 3).
     Outputs: batches of softmax activations (None, n_classes).
     """
+    _image_shape = (224, 224, 3)
 
     def __init__(self, n_classes, name='resnet50', weights='imagenet'):
         """
@@ -20,7 +21,6 @@ class ResNet50(Model):
         :param weights: one of 'imagenet', or path to the pretrained weights to load
         """
         super().__init__(name=name)
-        self._image_shape = (224, 224, 3)
         self._n_classes = n_classes
         self._transfer_learning = weights is not None
 

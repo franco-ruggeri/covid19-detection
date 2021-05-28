@@ -14,5 +14,6 @@
 /.idea/
 __pycache__/
 /covid19_detection.egg-info/
+/covid19-detection-*/
 /dist/
 /build/

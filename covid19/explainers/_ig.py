@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
 from scipy import ndimage
+from covid19.explainers._explainer import Explainer
 from tensorflow.keras.applications.resnet_v2 import preprocess_input
 
 
@@ -111,7 +112,7 @@ def _draw_outlines(attributions, percentage=90, connected_component_structure=np
     return border_mask
 
 
-class IG:
+class IG(Explainer):
     """
     Integrated Gradients (IG).
 
@@ -264,6 +265,7 @@ class IG:
         original = np.copy(image[0]).astype(np.uint8)
         probabilities = self.model.predict(image)
         prediction = tf.argmax(probabilities[0]).numpy()
+        confidence = probabilities[0, prediction]
         integrated_gradients = self._random_baseline_integrated_gradients(np.copy(original), top_pred_idx=prediction,
                                                                           num_steps=50, num_runs=2).numpy()
 
@@ -275,4 +277,4 @@ class IG:
             morphological_cleanup=True,
             outlines=True,
         )
-        return prediction, explanation
+        return prediction, confidence, explanation

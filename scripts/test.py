@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import argparse
 import numpy as np
 import tensorflow as tf
@@ -7,6 +9,18 @@ from pathlib import Path
 from covid19.datasets import image_dataset_from_directory
 from covid19.metrics import plot_confusion_matrix, plot_roc, make_classification_report
 from covid19.explainers import GradCAM, IG, plot_explanation
+
+
+def get_command_line_arguments():
+    parser = argparse.ArgumentParser(description='Test COVID-19 detection model.',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('analysis', type=str, help='type of evaluation. Supported: performance, explainability.')
+    parser.add_argument('data', type=str, help='path to the dataset')
+    parser.add_argument('output', type=str, help='path where to save the results')
+    parser.add_argument('model', type=str, help='path to the model/checkpoint to test')
+    parser.add_argument('architecture', type=str, help='architecture of the model. Supported: resnet50, covidnet.')
+    parser.add_argument('--explainer', type=str, default='gradcam', help='Explainer to use. Supported: gradcam, ig')
+    return parser.parse_args()
 
 
 def evaluate(model, dataset, dataset_info, output_path):
@@ -49,24 +63,17 @@ def explain(model, dataset, dataset_info, output_path, explainer):
             for image, label in zip(images, labels):
                 bar.update()
 
-                prediction, explanation = explainer.explain(image)
+                prediction, confidence, explanation = explainer.explain(image)
                 label = np.argmax(label)
-                save_path = output_path / (class_names[label] + '_{:05d}'.format(count[label]) + '.png')
-                plot_explanation(image, explanation, class_names[prediction], class_names[label], save_path=save_path)
                 count[label] += 1
+                save_path = output_path / (class_names[label] + '_{:05d}'.format(count[label]) + '.png')
+                plot_explanation(image, explanation, class_names[prediction], confidence, class_names[label],
+                                 save_path=save_path)
 
 
 def main():
     # command-line arguments
-    parser = argparse.ArgumentParser(description='Test COVID-19 detection model.',
-                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('analysis', type=str, help='type of evaluation. Supported: performance, explainability.')
-    parser.add_argument('data', type=str, help='path to the dataset')
-    parser.add_argument('output', type=str, help='path where to save the results')
-    parser.add_argument('model', type=str, help='path to the model/checkpoint to test')
-    parser.add_argument('architecture', type=str, help='architecture of the model. Supported: resnet50, covidnet.')
-    parser.add_argument('--explainer', type=str, default='gradcam', help='Explainer to use. Supported: gradcam, ig')
-    args = parser.parse_args()
+    args = get_command_line_arguments()
 
     # prepare paths
     dataset_path = Path(args.data) / 'test'
