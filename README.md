@@ -7,36 +7,41 @@ This package provides:
 - Several modules with a Keras-like API. These modules can be used in Python code.
   
 # 1. Setup
-For a complete installation, including the best models we trained, [download conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html) and run the following commands:
-```
-wget https://github.com/franco-ruggeri/dd2424-covid19-detection/blob/master/scripts/install.sh
-bash -i "install.sh <models_path>" 
-```
-
-The package is distributed on [PyPi](https://pypi.org/), so can also be installed with:
+The package is distributed on [PyPi](https://pypi.org/), so can be installed with:
 ```
 pip install covid19-detection
 ```
-However, the application needs trained models that have to be [downloaded](https://drive.google.com/drive/folders/1x7_xh1xNcuvT8j29y7pTyk_3nrFHNZd2?usp=sharing) or [trained on your own](3-command-line-suite).
+However, the application requires trained models. You can decide either to [download the best models we trained](https://drive.google.com/drive/folders/1x7_xh1xNcuvT8j29y7pTyk_3nrFHNZd2?usp=sharing) or to train your own models with the [command-line tools](3-command-line-suite).
+
+For a complete and ready-to-use installation, including the best models we trained, [download conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html) and run the following commands:
+```
+wget https://raw.githubusercontent.com/franco-ruggeri/dd2424-covid19-detection/master/scripts/install.sh
+bash -i install.sh <models_path>    # replace <models_path> with the path where you want to store the models
+```
 
 ## 2. Application
 If you have done the complete installation, the application is installed in your system and can be launched by searching it among the applications. Otherwise, you can launch it with:
 ```
-covid19-detector <models_path>
+covid19-detector <models_path>      # replace <models_path> with the path where you stored the models
 ```
 
 ## 3. Command-line suite
-The command-line suite is available under the *covid19-detection* command, but includes many subcommands. For the list of subcommands, run:
+The command-line suite is available under the *covid19-detection* command. It provides several subcommands. The list can be retrieved with:
 ```
-covid19-detection --help
+covid19-detection -h
+```
+
+More information about each subcommand can be obtained with:
+```
+covid19-detection <subcommand> -h
 ```
 
 ## 4. Structure of the package
 The covid19 package is composed of the following sub-packages:
 - covid19.datasets: contains utilities for generating COVIDx, HAM10000 and for building an input pipeline with tf.data.
+- covid19.models: contains ResNet50 and COVID-Net, two deep convolutional neural networks.
 - covid19.explainers: contains Grad-CAM and IG, two explainable AI methods, with some utilities for plotting the explanations.
 - covid19.layers: contains layers used by models in covid19.models.
 - covid19.metrics: contains utilities for computing and plotting metrics.
-- covid19.models: contains ResNet50 and COVID-Net, two deep convolutional neural networks.
 - covid19.gui: contains graphical user interface implemented with [Qt](https://www.qt.io/).
 - covid19.cli: contains command-line interface.
