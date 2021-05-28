@@ -3,7 +3,7 @@ This project is part of the course DD2424 Deep Learning in Data Science at KTH. 
 
 This repository can be used in two different ways:
 - As a [package](#1-python-package) in Python code, through a Keras-like API, using the [covid19](covid19) package. All the classes are documented.
-- As a [standalone application](#2-standalone-application), using the [Qt application](scripts/predict.py). New models can also be trained and tested using the [scripts](scripts). All the scripts provide documentation for the arguments.
+- As a [standalone application](#2-standalone-application), using the [Qt application](scripts/run_application.py). New models can also be trained and tested using the [scripts](scripts). All the scripts provide documentation for the arguments.
 
 ## 1. Python package
 
@@ -39,38 +39,22 @@ plot_learning_curves(history, save_path='path/to/save/learning_curves)
 
 ## 2. Standalone application
 
-### 2.1 Setup
-First, you need to clone the repository:
+### 2.1 Install on Linux
+You need to execute the following commands:
 ```
 git clone https://github.com/franco-ruggeri/dd2424-covid19-detection.git
 cd dd2424-covid19-detection
+bash -i scripts/install_application.sh
 ```
 
-Second, you need to install the dependencies. For this, download [conda](https://docs.conda.io/en/latest/) following the official instructions and execute the following commands:
-```
-conda create --name covid19-detection tensorflow
-conda activate covid19-detection
-pip install -r requirements.txt
-```
+Now the application is installed in your system and can be launched by searching it among the applications. 
 
-The Qt application expects to find a ResNet50 and a COVID-Net in the *models* directory. Create the directory:
-```
-mkdir models
-```
-Then, download the [best models](https://drive.google.com/drive/folders/1x7_xh1xNcuvT8j29y7pTyk_3nrFHNZd2?usp=sharing) we trained into that location. Alternatively, you can [train your own models](#23-train-and-test-models) as described below and put them there with the same names as the best models.
-
-### 2.2 Launch Qt application
-Every time you open a new terminal, you need to activate the conda environment:
-```
-conda activate covid19-detection
-```
-
-Now you are ready to launch the Qt application:
-```
-python scripts/predict.py
-```
+### 2.2 Install on Windows
+TODO
 
 ### 2.3 Train and test models
+After the installation, the Qt application uses the models in the *models* directory. You can train your own models and replace the default ones with them.
+
 The following scripts allow training and testing your own ResNet50 and COVID-Net:
 - generate_dataset: generates a dataset supported in covid19.datasets with training, validation and test splits.
 - examine_dataset: generates a plot with the data distribution for a dataset supported in covid19.datasets.
