@@ -1,15 +1,17 @@
 from pathlib import Path
 from setuptools import setup, find_packages
 
+
 with open('README.md') as f:
     long_description = f.read()
 with open('requirements.txt') as f:
     install_requires = f.read()
 scripts = [str(script) for script in list(Path('scripts').iterdir())]
 
+
 setup(
     name='covid19-detection',
-    version='0.2.3',
+    version='0.3.0',
     description='Detection of COVID-19 from Chest X-Ray Images',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -21,5 +23,9 @@ setup(
     include_package_data=False,
     scripts=scripts,
     url='https://github.com/franco-ruggeri/dd2424-covid19-detection',
-    install_requires=install_requires
+    install_requires=install_requires,
+    entry_points={
+        'console_scripts': ['covid19-detection=covid19.cli.__main__:main'],
+        'gui_scripts': ['covid19-detector=covid19.gui.__main__:main']
+    },
 )
