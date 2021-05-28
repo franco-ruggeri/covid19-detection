@@ -13,9 +13,9 @@ pip install gdown
 
 # download models
 models_path=$1
-rm -rf "$models_path"
-mkdir "$models_path"
+mkdir -p "$models_path"
 cd "$models_path"
+models_path=$(pwd)
 gdown --id 1bSs0-zSWZP2cPH25CQZkVrX9pgEdrxpl --output resnet50.index
 gdown --id 1v0j4psCHLMLMMZTg4R74ASAR_dwrULlW --output resnet50.data-00001-of-00002
 gdown --id 1vPQG2Q84DN8dnReMRnF09X9ZkCAkdQ22 --output resnet50.data-00000-of-00002
@@ -24,8 +24,11 @@ gdown --id 1ReHiskVQvuISJWHJjf7ne2zepmIyZiGP --output covidnet.data-00001-of-000
 gdown --id 1SyZ-Y9_xHPrnZ2WzaNpiMOsqm_9rwqc7 --output covidnet.data-00000-of-00002
 
 # download icon
-icon_path="~/.local/share/icons/covid19-detector.jpeg"
-wget https://raw.githubusercontent.com/franco-ruggeri/dd2424-covid19-detection/master/covid19/ui/qt_designer/images/logo.jpeg -O $icon_path
+icons_path=~/.local/share/icons
+cd $icons_path
+icon_path=$(pwd)
+icon_path="$icon_path/covid19-detector.jpeg"
+wget -q https://raw.githubusercontent.com/franco-ruggeri/dd2424-covid19-detection/master/covid19/ui/qt_designer/images/logo.jpeg -O "$icon_path"
 
 # create desktop entry
 cd ~/.local/share/applications
