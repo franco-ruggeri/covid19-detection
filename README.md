@@ -7,20 +7,22 @@ This package provides:
 - Several modules with a Keras-like API. These modules can be used in Python code.
   
 # 1. Setup
-The package is distributed on [PyPi](https://pypi.org/), so can be installed with:
+The recommended installation is the following:
+```
+wget https://raw.githubusercontent.com/franco-ruggeri/dd2424-covid19-detection/master/scripts/install_application.sh
+bash -i install_application.sh <models_path>    # replace <models_path> with the path where you want to store the models
+rm install_application.sh
+```
+This downloads the [best models we trained](https://drive.google.com/drive/folders/1x7_xh1xNcuvT8j29y7pTyk_3nrFHNZd2?usp=sharing) and installs the application in the system.
+
+The package is distributed on [PyPi](https://pypi.org/), so can be installed also with:
 ```
 pip install covid19-detection
 ```
-However, the application requires trained models. You can decide either to [download the best models we trained](https://drive.google.com/drive/folders/1x7_xh1xNcuvT8j29y7pTyk_3nrFHNZd2?usp=sharing) or to train your own models with the [command-line tools](3-command-line-suite).
-
-For a complete and ready-to-use installation, including the best models we trained, [download conda](https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html) and run the following commands:
-```
-wget https://raw.githubusercontent.com/franco-ruggeri/dd2424-covid19-detection/master/scripts/install.sh
-bash -i install.sh <models_path>    # replace <models_path> with the path where you want to store the models
-```
+However, in this case you have to provide the trained models to the application. You can decide either to download the [best models we trained](https://drive.google.com/drive/folders/1x7_xh1xNcuvT8j29y7pTyk_3nrFHNZd2?usp=sharing) or to train your own models with the [command-line tools](3-command-line-suite).
 
 ## 2. Application
-If you have done the complete installation, the application is installed in your system and can be launched by searching it among the applications. Otherwise, you can launch it with:
+If you have done the recommended installation, you can launch the application by searching among the applications. Otherwise, you can launch it on the terminal:
 ```
 covid19-detector <models_path>      # replace <models_path> with the path where you stored the models
 ```
@@ -36,12 +38,26 @@ More information about each subcommand can be obtained with:
 covid19-detection <subcommand> -h
 ```
 
-## 4. Structure of the package
-The covid19 package is composed of the following sub-packages:
-- covid19.datasets: contains utilities for generating COVIDx, HAM10000 and for building an input pipeline with tf.data.
-- covid19.models: contains ResNet50 and COVID-Net, two deep convolutional neural networks.
-- covid19.explainers: contains Grad-CAM and IG, two explainable AI methods, with some utilities for plotting the explanations.
-- covid19.layers: contains layers used by models in covid19.models.
-- covid19.metrics: contains utilities for computing and plotting metrics.
-- covid19.gui: contains graphical user interface implemented with [Qt](https://www.qt.io/).
-- covid19.cli: contains command-line interface.
+## 4. Package
+You can import the package in your Python code with:
+```
+import covid19
+```
+
+The *covid19* package is composed of the following sub-packages:
+- *covid19.datasets*: contains utilities for generating COVIDx, HAM10000 and for building an input pipeline with tf.data.
+- *covid19.models*: contains ResNet50 and COVID-Net, two deep convolutional neural networks.
+- *covid19.explainers*: contains Grad-CAM and IG, two explainable AI methods, with some utilities for plotting the explanations.
+- *covid19.layers*: contains layers used by models in covid19.models.
+- *covid19.metrics*: contains utilities for computing and plotting metrics.
+- *covid19.gui*: contains graphical user interface implemented with [Qt](https://www.qt.io/).
+- *covid19.cli*: contains command-line interface.
+
+Each subpackage provides interesting modules. For example, you can create a COVID-Net as follows:
+```
+from covid19.models import COVIDNet
+
+model = COVIDNet(n_classes=3)
+```
+
+For more information about each class, see the comments.
