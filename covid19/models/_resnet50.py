@@ -58,8 +58,17 @@ class ResNet50(Model):
     def fit_linear_classifier(self, learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks,
                               class_weights=None):
         self.feature_extractor.trainable = False
-        return self.compile_and_fit(learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks,
-                                    class_weights)
+        return self.compile_and_fit(
+            learning_rate=learning_rate,
+            loss=loss,
+            metrics=metrics,
+            train_ds=train_ds,
+            val_ds=val_ds,
+            epochs=epochs,
+            initial_epoch=initial_epoch,
+            callbacks=callbacks,
+            class_weights=class_weights
+        )
 
     def fine_tune(self, learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks, fine_tune_at,
                   class_weights=None):
@@ -68,8 +77,17 @@ class ResNet50(Model):
         self.feature_extractor.trainable = True     # unfreeze convolutional base
         for layer in self.feature_extractor.layers[-1].layers[:fine_tune_at]:
             layer.trainable = False                 # freeze bottom layers
-        return self.compile_and_fit(learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks,
-                                    class_weights)
+        return self.compile_and_fit(
+            learning_rate=learning_rate,
+            loss=loss,
+            metrics=metrics,
+            train_ds=train_ds,
+            val_ds=val_ds,
+            epochs=epochs,
+            initial_epoch=initial_epoch,
+            callbacks=callbacks,
+            class_weights=class_weights
+        )
 
     @property
     def feature_extractor(self):

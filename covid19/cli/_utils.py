@@ -6,8 +6,7 @@ def discard_argument():
     sys.argv = sys.argv[1:]
 
 
-def get_model(architecture, weights, dataset_info, load_weights):
-    n_classes = dataset_info['n_classes']
+def get_model(architecture, weights, n_classes, load_weights):
     if architecture == 'resnet50':
         model = ResNet50(n_classes, weights=weights)
     elif architecture == 'covidnet':

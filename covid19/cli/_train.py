@@ -13,7 +13,7 @@ from tensorflow.keras.layers import Dense
 def _get_mode():
     parser = argparse.ArgumentParser(description='Train COVID-19 detection model.',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('mode', type=str, choices=['from_scratch', 'transfer_learning'], help='mode to use.')
+    parser.add_argument('mode', type=str, choices=['from_scratch', 'transfer_learning'], help='mode to use')
     return parser.parse_args()
 
 
@@ -25,7 +25,7 @@ def _add_arguments_common(parser):
     parser.add_argument('--data-augmentation', action='store_true', default=False, help='augment data during training')
     parser.add_argument('--load-weights', type=str, default=None,
                         help='path to weights to be loaded (useful for resuming training)')
-    parser.add_argument('--initial-epoch', type=int, default=0,
+    parser.add_argument('--initial-epoch', type=int, default=3,
                         help='initial epochs to skip (useful for resuming training)')
     parser.add_argument('--epochs', type=int, default=30, help='epochs of training')
     parser.add_argument('--learning-rate', type=float, default=1e-4, help='learning rate for training')
@@ -50,6 +50,8 @@ def _get_arguments_transfer_learning():
     parser.add_argument('model', type=str,
                         help='path where to save the training output (e.g., trained model), must not exist')
     parser.add_argument('weights', type=str, help='`imagenet` (only for resnet50), or path to the pretrained weights')
+    parser.add_argument('--n-classes-pretrain', type=int, default=3,
+                        help='number of classes in the dataset used for pretraining (no need for resnet50 on imagenet.')
     parser.add_argument('--epochs-ft', type=int, default=10, help='epochs of fine-tuning')
     parser.add_argument('--learning-rate-ft', type=float, default=1e-6, help='learning rate for fine-tuning')
     parser.add_argument('--fine-tune-at', type=int, default=0, help='index of layer at which to start to unfreeze')
@@ -125,6 +127,7 @@ def train():
     train_ds, train_ds_info = image_dataset_from_directory(dataset_path / 'train', image_size,
                                                            augmentation=args.data_augmentation)
     val_ds, _ = image_dataset_from_directory(dataset_path / 'validation', image_size, shuffle=False)
+    n_classes = train_ds_info['n_classes']
 
     # prepare training stuff
     metrics = _get_metrics(train_ds_info)
@@ -136,7 +139,7 @@ def train():
     discard_argument()
     if mode == 'from_scratch':
         # train whole model from scratch
-        model = get_model(args.architecture, None, train_ds_info, args.load_weights)
+        model = get_model(args.architecture, None, n_classes, args.load_weights)
         history = model.compile_and_fit(
             learning_rate=args.learning_rate,
             loss=args.loss,
@@ -153,9 +156,9 @@ def train():
 
     elif mode == 'transfer_learning':
         # replace last layer with the right number of units
-        model = get_model(args.architecture, args.weights, train_ds_info, args.load_weights)
+        model = get_model(args.architecture, args.weights, args.n_classes_pretrain, args.load_weights)
         model.classifier.pop()
-        model.classifier.add(Dense(train_ds_info['n_classes']))
+        model.classifier.add(Dense(n_classes))
 
         # train linear classifier
         history = model.fit_linear_classifier(

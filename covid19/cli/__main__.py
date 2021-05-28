@@ -4,14 +4,14 @@ from covid19.cli._utils import discard_argument
 
 
 def get_command():
-    parser = argparse.ArgumentParser(description='Tools for COVID-19 detection',
+    parser = argparse.ArgumentParser(description='Tools for COVID-19 detection.',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('command', type=str, choices=['train', 'test', 'dataset'], help='command to execute.')
     return parser.parse_args()
 
 
 def get_dataset_subcommand():
-    parser = argparse.ArgumentParser(description='Tools for datasets',
+    parser = argparse.ArgumentParser(description='Tools for datasets.',
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('command', type=str, choices=['generate', 'examine'], help='command to execute.')
     return parser.parse_args()

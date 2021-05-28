@@ -21,7 +21,7 @@ def _get_arguments():
                         help='architecture of the model.')
     parser.add_argument('--analysis', type=str, default='performance', choices=['performance', 'explainability'],
                         help='type of evaluation.')
-    parser.add_argument('--explainer', type=str, default='gradcam', choices=['gradcam', 'ig'], help='explainer to use.')
+    parser.add_argument('--explainer', type=str, default='gradcam', choices=['gradcam', 'ig'], help='explainer to use')
     parser.add_argument('--verbose', type=int, default=2, help='verbosity level of the output')
     return parser.parse_args()
 
@@ -88,7 +88,8 @@ def test():
     test_ds, test_ds_info = image_dataset_from_directory(dataset_path, image_size, shuffle=False)
 
     # test
-    model = get_model(args.architecture, None, test_ds_info, args.model)
+    n_classes = test_ds_info['n_classes']
+    model = get_model(args.architecture, None, n_classes, args.model)
     if args.analysis == 'performance':
         _evaluate(model, test_ds, test_ds_info, output_path, args.verbose)
     elif args.analysis == 'explainability':

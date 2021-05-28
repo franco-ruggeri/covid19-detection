@@ -35,7 +35,7 @@ class COVIDNet(Model):
     COVID-19 detection model with specific architecture proposed by Linda Wangg et al. (see docs/COVID-Net).
 
     Inputs: batches of images with shape (None, 224, 224, 3).
-    Outputs: batches of softmax activations (None, 3). The 3 classes are meant to be: covid-19, normal, pneumonia.
+    Outputs: batches of softmax activations (None, n_classes).
 
     Since the paper does not provide all the details, some choices have been taken according to the state of the art:
     - Batch normalization, ReLU activation, and L2 regularization for the fully connected layers.
@@ -99,8 +99,17 @@ class COVIDNet(Model):
         self.classifier.trainable = True
         for layer in self.classifier.layers[:-1]:
             layer.trainable = False
-        return self.compile_and_fit(learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks,
-                                    class_weights)
+        return self.compile_and_fit(
+            learning_rate=learning_rate,
+            loss=loss,
+            metrics=metrics,
+            train_ds=train_ds,
+            val_ds=val_ds,
+            epochs=epochs,
+            initial_epoch=initial_epoch,
+            callbacks=callbacks,
+            class_weights=class_weights
+        )
 
     def fine_tune(self, learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks, fine_tune_at,
                   class_weights=None):
@@ -126,8 +135,17 @@ class COVIDNet(Model):
             for layer in self.classifier.layers:
                 layer.trainable = True
 
-        return self.compile_and_fit(learning_rate, loss, metrics, train_ds, val_ds, epochs, initial_epoch, callbacks,
-                                    class_weights)
+        return self.compile_and_fit(
+            learning_rate=learning_rate,
+            loss=loss,
+            metrics=metrics,
+            train_ds=train_ds,
+            val_ds=val_ds,
+            epochs=epochs,
+            initial_epoch=initial_epoch,
+            callbacks=callbacks,
+            class_weights=class_weights
+        )
 
     @property
     def feature_extractor(self):
