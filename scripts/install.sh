@@ -24,10 +24,10 @@ gdown --id 1ReHiskVQvuISJWHJjf7ne2zepmIyZiGP --output covidnet.data-00001-of-000
 gdown --id 1SyZ-Y9_xHPrnZ2WzaNpiMOsqm_9rwqc7 --output covidnet.data-00000-of-00002
 
 # download icon
-icons_path=~/.local/share/icons
-cd $icons_path
-icon_path=$(pwd)
-icon_path="$icon_path/covid19-detector.jpeg"
+icon_path=~/.covid19-detection
+mkdir -p $icon_path
+cd $icon_path
+icon_path="$(pwd)/covid19-detector.jpeg"
 wget -q https://raw.githubusercontent.com/franco-ruggeri/dd2424-covid19-detection/master/covid19/ui/qt_designer/images/logo.jpeg -O "$icon_path"
 
 # create desktop entry
@@ -37,6 +37,6 @@ echo "[Desktop Entry]" > $filename
 echo "Version=0.3.0" >> $filename
 echo "Type=Application" >> $filename
 echo "Terminal=false" >> $filename
-echo "Exec=bash -i \"conda activate covid19-detection && covid19-detector $models_path\"" >> $filename
+echo "Exec=bash -i -c \"conda activate covid19-detection && covid19-detector $models_path\"" >> $filename
 echo "Name=COVID-19 Detector" >> $filename
 echo "Icon=$icon_path" >> $filename
