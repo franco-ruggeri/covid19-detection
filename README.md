@@ -5,15 +5,14 @@ This package provides:
 - An [application](#2-application) with a graphical user interface (GUI). This application can be used to make predictions on your images using trained models.
 - A [suite of tools](#2-command-line-suite) with a command-line interface (CLI). These tools can be used to train and test new models.
 - Several modules with a Keras-like API. These modules can be used in Python code.
-  
+
 # 1. Setup
 The recommended installation is the following:
 ```
-wget https://raw.githubusercontent.com/franco-ruggeri/dd2424-covid19-detection/master/scripts/install_application.sh
-bash -i install_application.sh <models_path>    # replace <models_path> with the path where you want to store the models
-rm install_application.sh
+wget https://raw.githubusercontent.com/franco-ruggeri/dd2424-covid19-detection/master/scripts/install.sh
+bash -i install.sh
 ```
-This downloads the [best models we trained](https://drive.google.com/drive/folders/1x7_xh1xNcuvT8j29y7pTyk_3nrFHNZd2?usp=sharing) and installs the application in the system.
+Following the prompt, you can get a ready-to-use installation that uses the [best models we trained](https://drive.google.com/drive/folders/1x7_xh1xNcuvT8j29y7pTyk_3nrFHNZd2?usp=sharing).
 
 The package is distributed on [PyPi](https://pypi.org/), so can be installed also with:
 ```
@@ -22,9 +21,9 @@ pip install covid19-detection
 However, in this case you have to provide the trained models to the application. You can decide either to download the [best models we trained](https://drive.google.com/drive/folders/1x7_xh1xNcuvT8j29y7pTyk_3nrFHNZd2?usp=sharing) or to train your own models with the [command-line tools](3-command-line-suite).
 
 ## 2. Application
-If you have done the recommended installation, you can launch the application by searching among the applications. Otherwise, you can launch it on the terminal:
+If you have done the recommended installation, you can launch the application by searching it among the applications. Otherwise, you can launch it from the terminal:
 ```
-covid19-detector <models_path>      # replace <models_path> with the path where you stored the models
+covid19-detector
 ```
 
 ## 3. Command-line suite
@@ -44,14 +43,14 @@ You can import the package in your Python code with:
 import covid19
 ```
 
-The *covid19* package is composed of the following sub-packages:
-- *covid19.datasets*: contains utilities for generating COVIDx, HAM10000 and for building an input pipeline with tf.data.
-- *covid19.models*: contains ResNet50 and COVID-Net, two deep convolutional neural networks.
-- *covid19.explainers*: contains Grad-CAM and IG, two explainable AI methods, with some utilities for plotting the explanations.
-- *covid19.layers*: contains layers used by models in covid19.models.
-- *covid19.metrics*: contains utilities for computing and plotting metrics.
-- *covid19.gui*: contains graphical user interface implemented with [Qt](https://www.qt.io/).
-- *covid19.cli*: contains command-line interface.
+The covid19 package is composed of the following sub-packages:
+- covid19.datasets: contains utilities for generating COVIDx, HAM10000 and for building an input pipeline with tf.data.
+- covid19.models: contains ResNet50 and COVID-Net, two deep convolutional neural networks.
+- covid19.explainers: contains Grad-CAM and IG, two explainable AI methods, with some utilities for plotting the explanations.
+- covid19.layers: contains layers used by models in covid19.models.
+- covid19.metrics: contains utilities for computing and plotting metrics.
+- covid19.gui: contains graphical user interface implemented with [Qt](https://www.qt.io/).
+- covid19.cli: contains command-line interface.
 
 Each subpackage provides interesting modules. For example, you can create a COVID-Net as follows:
 ```
