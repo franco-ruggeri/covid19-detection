@@ -1,19 +1,14 @@
-#!/usr/bin/env python3
-
-import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
 
 
-def get_command_line_arguments():
-    parser = argparse.ArgumentParser(description='Examine dataset.')
+def add_arguments_examine_dataset(parser):
     parser.add_argument('data', type=str, help='path to the dataset')
     parser.add_argument('output', type=str, help='path where to save the dataset stats')
-    return parser.parse_args()
 
 
-def get_stats(dataset_path):
+def _get_stats(dataset_path):
     train_path = dataset_path / 'train'
     val_path = dataset_path / 'validation'
     test_path = dataset_path / 'test'
@@ -40,7 +35,7 @@ def get_stats(dataset_path):
     return stats, class_names
 
 
-def write_stats(stats, class_names, save_path):
+def _write_stats(stats, class_names, save_path):
     with open(save_path / 'stats.txt', 'w') as f:
         for dataset, dataset_stats in stats.items():
             f.write('{:<15}\n'.format(dataset + ' set:'))
@@ -52,7 +47,7 @@ def write_stats(stats, class_names, save_path):
             print('{:<15}{:^15}\n'.format('total', dataset_stats[1]))
 
 
-def plot_stats(stats, class_names, save_path):
+def _plot_stats(stats, class_names, save_path):
     x = np.arange(len(class_names))
     plt.figure()
     plt.bar(x, stats['training'][0], width=0.25, label='training')
@@ -65,20 +60,13 @@ def plot_stats(stats, class_names, save_path):
     plt.show()
 
 
-def main():
-    # command-line arguments
-    args = get_command_line_arguments()
-
+def examine_dataset(args):
     # prepare paths
     dataset_path = Path(args.data)
     output_path = Path(args.output)
     output_path.mkdir(parents=True, exist_ok=True)
 
     # analyze
-    stats, class_names = get_stats(dataset_path)
-    write_stats(stats, class_names, output_path)
-    plot_stats(stats, class_names, output_path)
-
-
-if __name__ == '__main__':
-    main()
+    stats, class_names = _get_stats(dataset_path)
+    _write_stats(stats, class_names, output_path)
+    _plot_stats(stats, class_names, output_path)

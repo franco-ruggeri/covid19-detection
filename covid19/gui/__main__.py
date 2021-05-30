@@ -1,16 +1,16 @@
-#!/usr/bin/env python3
-
 import sys
-from pathlib import Path
-from PySide6.QtWidgets import QApplication
-from covid19.ui import Client
+from PySide6.QtWidgets import QApplication, QFileDialog
+from covid19.gui import Client
 
 
 def main():
     app = QApplication(sys.argv)
+    app.setOrganizationName('kth')
+    app.setOrganizationDomain('kth.se')
+    app.setApplicationName('covid19-detector')
+
     window = Client(
         n_classes=3,
-        models_path=Path(__file__).absolute().parent.parent / 'models',
         class_labels={'covid-19': 0, 'normal': 1, 'pneumonia': 2}
     )
     window.showMaximized()

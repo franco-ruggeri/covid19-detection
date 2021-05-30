@@ -34,8 +34,14 @@ class Model(tf.keras.Model, ABC):
         """
         self.compile(optimizer=Adam(lr=learning_rate), loss=loss, metrics=metrics)
         self.summary()
-        return self.fit(train_ds, epochs=epochs+initial_epoch, initial_epoch=initial_epoch, validation_data=val_ds,
-                        callbacks=callbacks, class_weight=class_weights)
+        return self.fit(
+            x=train_ds,
+            epochs=epochs+initial_epoch,
+            initial_epoch=initial_epoch,
+            validation_data=val_ds,
+            callbacks=callbacks,
+            class_weight=class_weights
+        )
 
     def call(self, inputs, training=None, mask=None):
         """Forward pass."""

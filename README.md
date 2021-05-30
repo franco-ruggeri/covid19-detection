@@ -1,85 +1,62 @@
 # Explainable Detection of COVID-19 from Chest X-Ray Images
 This project is part of the course DD2424 Deep Learning in Data Science at KTH. The goal is to train a classifier for COVID-19 detection from chest X-ray (CXR) images and boost it with explainability. More information can be found in the [report](https://github.com/franco-ruggeri/dd2424-covid19-detection/blob/master/docs/report.pdf). Also check out our [presentation](https://www.youtube.com/watch?v=c1TNhvAmddE&feature=youtu.be).
 
-This repository can be used in two different ways:
-- As a [package](#1-python-package) in Python code, through a Keras-like API, using the [covid19](covid19) package. All the classes are documented.
-- As a [standalone application](#2-standalone-application), using the [Qt application](scripts/run_application.py). New models can also be trained and tested using the [scripts](scripts). All the scripts provide documentation for the arguments.
+This package provides:
+- An [application](#2-application) with a graphical user interface (GUI). This application can be used to make predictions on your images using trained models.
+- A [suite of tools](#2-command-line-suite) with a command-line interface (CLI). These tools can be used to train and test new models.
+- Several modules with a Keras-like API. These modules can be used in Python code.
 
-## 1. Python package
+# 1. Setup
+The recommended installation is the following:
+```
+wget https://raw.githubusercontent.com/franco-ruggeri/dd2424-covid19-detection/master/scripts/install.sh -O install.sh
+bash -i install.sh
+```
+Following the prompt, you can get a ready-to-use installation that uses the [best models we trained](https://drive.google.com/drive/folders/1x7_xh1xNcuvT8j29y7pTyk_3nrFHNZd2?usp=sharing).
 
-### 1.1 Install
-The package is distributed on [PyPi](https://pypi.org/), so can be installed with:
+The package is distributed on [PyPi](https://pypi.org/), so can be installed also with:
 ```
 pip install covid19-detection
 ```
+However, in this case you have to provide the trained models to the application. You can decide either to download the [best models we trained](https://drive.google.com/drive/folders/1x7_xh1xNcuvT8j29y7pTyk_3nrFHNZd2?usp=sharing) or to train your own models with the [command-line tools](3-command-line-suite).
 
-### 1.2 Structure of the package
+## 2. Application
+If you have done the recommended installation, you can launch the application by searching it among the applications. Otherwise, you can launch it from the terminal:
+```
+covid19-detector
+```
+
+## 3. Command-line suite
+The command-line suite is available under the *covid19-detection* command. It provides several subcommands. The list can be retrieved with:
+```
+covid19-detection -h
+```
+
+More information about each subcommand can be obtained with:
+```
+covid19-detection <subcommand> -h
+```
+
+## 4. Package
+You can import the package in your Python code with:
+```
+import covid19
+```
+
 The covid19 package is composed of the following sub-packages:
 - covid19.datasets: contains utilities for generating COVIDx, HAM10000 and for building an input pipeline with tf.data.
+- covid19.models: contains ResNet50 and COVID-Net, two deep convolutional neural networks.
 - covid19.explainers: contains Grad-CAM and IG, two explainable AI methods, with some utilities for plotting the explanations.
 - covid19.layers: contains layers used by models in covid19.models.
 - covid19.metrics: contains utilities for computing and plotting metrics.
-- covid19.models: contains ResNet50 and COVID-Net, two deep convolutional neural networks.
-- covid19.ui: contains graphical user interface implemented with [Qt](https://www.qt.io/).
+- covid19.gui: contains graphical user interface implemented with [Qt](https://www.qt.io/).
+- covid19.cli: contains command-line interface.
 
-### 1.3 Example of usage
-Here is a snippet of code to train a COVID-Net:
+Each subpackage provides interesting modules. For example, you can create a COVID-Net as follows:
 ```
 from covid19.models import COVIDNet
-from covid19.datasets import image_dataset_from_directory
-from covid19.metrics import plot_learning_curves
 
-train_ds, train_ds_info = image_dataset_from_directory('path/to/COVIDx/train')
-val_ds, _ = image_dataset_from_directory('path/to/COVIDx/validation')
-model = COVIDNet(train_ds_info['n_classes'])
-history = model.compile_and_fit(1e-4, 'cross_entropy', ['accuracy'], train_ds, val_ds, 30, 0, [])
-model.save_weights('path/to/save/model')
-plot_learning_curves(history, save_path='path/to/save/learning_curves)
+model = COVIDNet(n_classes=3)
 ```
 
-## 2. Standalone application
-
-### 2.1 Install on Linux
-You need to execute the following commands:
-```
-git clone https://github.com/franco-ruggeri/dd2424-covid19-detection.git
-cd dd2424-covid19-detection
-bash -i scripts/install_application.sh
-```
-
-Now the application is installed in your system and can be launched by searching it among the applications. 
-
-### 2.2 Install on Windows
-TODO
-
-### 2.3 Train and test models
-After the installation, the Qt application uses the models in the *models* directory. You can train your own models and replace the default ones with them.
-
-The following scripts allow training and testing your own ResNet50 and COVID-Net:
-- generate_dataset: generates a dataset supported in covid19.datasets with training, validation and test splits.
-- examine_dataset: generates a plot with the data distribution for a dataset supported in covid19.datasets.
-- train_from_scratch: trains ResNet50 or COVID-Net from covid19.models from scratch.
-- train_transfer_learning: trains ResNet50 or COVID-Net from covid19.models using transfer learning from another dataset.
-- extract_pretrained: converts a model trained on a dataset to a pretrained model for another dataset.
-- test: tests the performance or the explainability of ResNet50 or COVID-Net from covid19.models.
-
-A detailed description of the arguments and options of these scripts can be obtained with:
-```
-python <script>.py -h
-```
-
-### 2.4 Example of usage
-Here are some examples of usage of the scripts:
-```
-# pretrain ResNet50 on HAM10000
-python train_from_scratch.py path/to/HAM10000 path/to/save/model_1 --architecture resnet50
-python extract_pretrained.py path/to/HAM10000 path/to/COVIDx path/to/save/model_2 path/to/model_1 resnet50
-
-# train on COVIDx with transfer learning from HAM10000
-python train_transfer_learning.py path/to/COVIDx path/to/save/model_3 path/to/model_2
-
-# test the model
-python test.py performance path/to/COVIDx path/to/save/results path/to/model_3 resnet50
-python test.py explainability path/to/COVIDx path/to/save/results path/to/model_3 resnet50 --explainer gradcam
-python test.py explainability path/to/COVIDx path/to/save/results path/to/model_3 resnet50 --explainer ig
-```
+For more information about each class, see the comments.

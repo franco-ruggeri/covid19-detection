@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1450</width>
-    <height>1049</height>
+    <height>1051</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -41,7 +41,7 @@ QPushButton#predict:hover {
 }
 
 QPushButton#predict:disabled {
-	background-color: rgb(197, 114, 114)
+	background-color: rgba(239, 41, 41, 50%)
 }
 
 QPushButton#select_image {
@@ -55,6 +55,14 @@ QPushButton#select_image:hover {
 
 QPushButton#select_image:disabled {
 	background-color: rgba(75, 116, 22, 50%)
+}
+
+QPushButton#change_models_path {
+	border-image: url(:/images/settings.png);
+}
+
+QPushButton#change_models_path:hover {
+	background-color: rgb(136, 138, 133);
 }
 
 QGroupBox * {
@@ -252,32 +260,6 @@ QGroupBox * {
            </item>
           </layout>
          </item>
-         <item row="5" column="1">
-          <widget class="QComboBox" name="model">
-           <property name="minimumSize">
-            <size>
-             <width>0</width>
-             <height>50</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>250</width>
-             <height>50</height>
-            </size>
-           </property>
-           <item>
-            <property name="text">
-             <string>ResNet50</string>
-            </property>
-           </item>
-           <item>
-            <property name="text">
-             <string>COVID-Net</string>
-            </property>
-           </item>
-          </widget>
-         </item>
          <item row="6" column="0">
           <layout class="QHBoxLayout" name="horizontalLayout_3">
            <item>
@@ -444,6 +426,55 @@ QGroupBox * {
            </property>
           </widget>
          </item>
+         <item row="5" column="1">
+          <layout class="QHBoxLayout" name="horizontalLayout_4">
+           <item>
+            <widget class="QComboBox" name="model">
+             <property name="minimumSize">
+              <size>
+               <width>0</width>
+               <height>50</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>250</width>
+               <height>50</height>
+              </size>
+             </property>
+             <item>
+              <property name="text">
+               <string>ResNet50</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>COVID-Net</string>
+              </property>
+             </item>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="change_models_path">
+             <property name="minimumSize">
+              <size>
+               <width>50</width>
+               <height>50</height>
+              </size>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>50</width>
+               <height>50</height>
+              </size>
+             </property>
+             <property name="text">
+              <string/>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
         </layout>
        </widget>
       </item>
@@ -503,6 +534,7 @@ QGroupBox * {
     </item>
    </layout>
   </widget>
+  <widget class="QStatusBar" name="statusbar"/>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
@@ -513,7 +545,6 @@ QGroupBox * {
     </rect>
    </property>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
  </widget>
  <resources>
   <include location="resource.qrc"/>
