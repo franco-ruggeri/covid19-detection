@@ -9,7 +9,7 @@ This package provides:
 # 1. Setup
 The recommended installation is the following:
 ```
-wget https://raw.githubusercontent.com/franco-ruggeri/dd2424-covid19-detection/master/scripts/install.sh
+wget https://raw.githubusercontent.com/franco-ruggeri/dd2424-covid19-detection/master/scripts/install.sh -O install.sh
 bash -i install.sh
 ```
 Following the prompt, you can get a ready-to-use installation that uses the [best models we trained](https://drive.google.com/drive/folders/1x7_xh1xNcuvT8j29y7pTyk_3nrFHNZd2?usp=sharing).

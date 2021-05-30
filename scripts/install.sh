@@ -8,14 +8,12 @@ if [ -z "${REPLY}" ] || [ "${REPLY:0:1}" = "Y" ] || [ "${REPLY:0:1}" = "y" ]; th
   if [ -z "$conda_env" ]; then
     conda_env=$conda_env_default
   fi
-  conda create --name $conda_env -y
-  conda install tensorflow==2.3.0
+  conda create --name $conda_env tensorflow==2.3.0 -y
   conda activate $conda_env
 fi
 
 # install packages
-pip install covid19-detection
-pip install gdown
+echo y | pip install covid19-detection gdown
 
 # download models
 models_path_default="$HOME/.covid19-detector/models"
