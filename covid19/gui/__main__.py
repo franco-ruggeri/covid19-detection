@@ -1,5 +1,5 @@
 import sys
-from PySide6.QtWidgets import QApplication, QFileDialog
+from PySide6.QtWidgets import QApplication
 from covid19.gui import Client
 
 

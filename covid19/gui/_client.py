@@ -156,7 +156,7 @@ class Client(QMainWindow):
             dir=QStandardPaths.standardLocations(QStandardPaths.AppDataLocation).pop(),
         )
         if models_path != '':
-            settings.setValue(self._models_path_key, str(self._models_path))
+            settings.setValue(self._models_path_key, str(models_path))
             self._models_path = Path(models_path)
             print(models_path)
         else:
