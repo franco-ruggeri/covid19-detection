@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import tensorflow as tf
 from pathlib import Path
-from PySide6.QtCore import Slot, QStandardPaths
+from PySide6.QtCore import Slot, QStandardPaths, QSettings
 from PySide6.QtWidgets import QMainWindow, QFileDialog, QMessageBox
 from PySide6.QtGui import QPixmap
 from covid19.gui._ui_client import Ui_Client
@@ -27,10 +27,11 @@ def numpy_to_pixmap(image, size):
 
 
 class Client(QMainWindow):
-    def __init__(self, n_classes, models_path, class_labels):
+    _models_path_key = 'models_path'
+
+    def __init__(self, n_classes, class_labels):
         super().__init__()
         self.n_classes = n_classes
-        self.models_path = Path(models_path)
         self.class_labels = {l: c for (c, l) in class_labels.items()}
         self._model = None
         self._model_loaded = False
@@ -45,11 +46,12 @@ class Client(QMainWindow):
         self.ui.explainer.currentTextChanged.connect(self._refresh_predict)
         self.ui.predict.clicked.connect(self._refresh_predict)
         self.ui.select_image.clicked.connect(self._refresh_predict)
+        self.ui.change_models_path.clicked.connect(self._change_models_path)
 
         self._input_size = _get_size(self.ui.input)
         self._explanation_size = _get_size(self.ui.explanation)
+        self._init_models_path()
         self._refresh_model()
-        self.ui.predict.setEnabled(False)
 
     @Slot()
     def on_predict_clicked(self):
@@ -93,10 +95,10 @@ class Client(QMainWindow):
         print('Loading {}... '.format(model), end='', flush=True)
         if model == 'ResNet50':
             self._model = ResNet50(self.n_classes, weights=None)
-            model_path = self.models_path / 'resnet50'
+            model_path = self._models_path / 'resnet50'
         elif model == 'COVID-Net':
             self._model = COVIDNet(self.n_classes, weights=None)
-            model_path = self.models_path / 'covidnet'
+            model_path = self._models_path / 'covidnet'
         else:
             raise ValueError('Invalid model {}'.format(model))
         try:
@@ -137,3 +139,32 @@ class Client(QMainWindow):
     def _refresh_predict(self):
         enabled = self._model_loaded and not self._input_predicted and self._input is not None
         self.ui.predict.setEnabled(enabled)
+
+    @Slot()
+    def _change_models_path(self):
+        models_path_old = self._models_path
+        self._select_models_path()
+        if self._models_path != models_path_old:
+            self._refresh_model()
+
+    def _select_models_path(self):
+        print('Selecting models path... ', end='', flush=True)
+        settings = QSettings()
+        models_path = QFileDialog.getExistingDirectory(
+            parent=self,
+            caption='Select models directory',
+            dir=QStandardPaths.standardLocations(QStandardPaths.AppDataLocation).pop(),
+        )
+        if models_path != '':
+            settings.setValue(self._models_path_key, str(self._models_path))
+            self._models_path = Path(models_path)
+            print(models_path)
+        else:
+            print('canceled')
+
+    def _init_models_path(self):
+        settings = QSettings()
+        self._models_path = settings.value(self._models_path_key)
+        while self._models_path is None or self._models_path == '':
+            self._select_models_path()
+        self._models_path = Path(str(self._models_path))

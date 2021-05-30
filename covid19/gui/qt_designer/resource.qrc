@@ -4,5 +4,6 @@
         <file>images/default.png</file>
         <file>images/ok.png</file>
         <file>images/error.png</file>
+        <file>images/settings.png</file>
     </qresource>
 </RCC>

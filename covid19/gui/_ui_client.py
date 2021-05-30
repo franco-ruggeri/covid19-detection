@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'client.gui'
+## Form generated from reading UI file 'client.ui'
 ##
 ## Created by: Qt User Interface Compiler version 6.1.0
 ##
@@ -18,7 +18,7 @@ class Ui_Client(object):
     def setupUi(self, Client):
         if not Client.objectName():
             Client.setObjectName(u"Client")
-        Client.resize(1450, 1049)
+        Client.resize(1450, 1051)
         icon = QIcon()
         icon.addFile(u":/images/logo.jpeg", QSize(), QIcon.Normal, QIcon.Off)
         Client.setWindowIcon(icon)
@@ -45,7 +45,7 @@ class Ui_Client(object):
 "}\n"
 "\n"
 "QPushButton#predict:disabled {\n"
-"	background-color: rgb(197, 114, 114)\n"
+"	background-color: rgba(239, 41, 41, 50%)\n"
 "}\n"
 "\n"
 "QPushButton#select_image {\n"
@@ -59,6 +59,14 @@ class Ui_Client(object):
 "\n"
 "QPushButton#select_image:disabled {\n"
 "	background-color: rgba(75, 116, 22, 50%)\n"
+"}\n"
+"\n"
+"QPushButton#change_models_path {\n"
+"	border-image: url(:/images/settings.png);\n"
+"}\n"
+"\n"
+"QPushButton#change_models_path:hover {\n"
+"	background-color: rgb(136, 138, 133);\n"
 "}\n"
 "\n"
 "QGroupBox * {\n"
@@ -172,15 +180,6 @@ class Ui_Client(object):
 
         self.formLayout.setLayout(5, QFormLayout.LabelRole, self.horizontalLayout_2)
 
-        self.model = QComboBox(self.settings)
-        self.model.addItem("")
-        self.model.addItem("")
-        self.model.setObjectName(u"model")
-        self.model.setMinimumSize(QSize(0, 50))
-        self.model.setMaximumSize(QSize(250, 50))
-
-        self.formLayout.setWidget(5, QFormLayout.FieldRole, self.model)
-
         self.horizontalLayout_3 = QHBoxLayout()
         self.horizontalLayout_3.setObjectName(u"horizontalLayout_3")
         self.explainer_state = QLabel(self.settings)
@@ -248,6 +247,27 @@ class Ui_Client(object):
 
         self.formLayout.setWidget(7, QFormLayout.FieldRole, self.select_image)
 
+        self.horizontalLayout_4 = QHBoxLayout()
+        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
+        self.model = QComboBox(self.settings)
+        self.model.addItem("")
+        self.model.addItem("")
+        self.model.setObjectName(u"model")
+        self.model.setMinimumSize(QSize(0, 50))
+        self.model.setMaximumSize(QSize(250, 50))
+
+        self.horizontalLayout_4.addWidget(self.model)
+
+        self.change_models_path = QPushButton(self.settings)
+        self.change_models_path.setObjectName(u"change_models_path")
+        self.change_models_path.setMinimumSize(QSize(50, 50))
+        self.change_models_path.setMaximumSize(QSize(50, 50))
+
+        self.horizontalLayout_4.addWidget(self.change_models_path)
+
+
+        self.formLayout.setLayout(5, QFormLayout.FieldRole, self.horizontalLayout_4)
+
 
         self.input_panel.addWidget(self.settings)
 
@@ -271,13 +291,13 @@ class Ui_Client(object):
         self.gridLayout.addItem(self.verticalSpacer_2, 1, 3, 1, 1)
 
         Client.setCentralWidget(self.centralwidget)
+        self.statusbar = QStatusBar(Client)
+        self.statusbar.setObjectName(u"statusbar")
+        Client.setStatusBar(self.statusbar)
         self.menubar = QMenuBar(Client)
         self.menubar.setObjectName(u"menubar")
         self.menubar.setGeometry(QRect(0, 0, 1450, 26))
         Client.setMenuBar(self.menubar)
-        self.statusbar = QStatusBar(Client)
-        self.statusbar.setObjectName(u"statusbar")
-        Client.setStatusBar(self.statusbar)
 
         self.retranslateUi(Client)
 
@@ -298,9 +318,6 @@ class Ui_Client(object):
         self.settings.setTitle(QCoreApplication.translate("Client", u"Settings", None))
         self.model_state.setText("")
         self.model_label.setText(QCoreApplication.translate("Client", u"Model:", None))
-        self.model.setItemText(0, QCoreApplication.translate("Client", u"ResNet50", None))
-        self.model.setItemText(1, QCoreApplication.translate("Client", u"COVID-Net", None))
-
         self.explainer_state.setText("")
         self.explainaer_label.setText(QCoreApplication.translate("Client", u"Explainer:", None))
         self.explainer.setItemText(0, QCoreApplication.translate("Client", u"Grad-CAM", None))
@@ -310,5 +327,9 @@ class Ui_Client(object):
         self.input_state.setText("")
         self.select_image_label.setText(QCoreApplication.translate("Client", u"Input image:", None))
         self.select_image.setText(QCoreApplication.translate("Client", u"Select image", None))
+        self.model.setItemText(0, QCoreApplication.translate("Client", u"ResNet50", None))
+        self.model.setItemText(1, QCoreApplication.translate("Client", u"COVID-Net", None))
+
+        self.change_models_path.setText("")
     # retranslateUi
 
