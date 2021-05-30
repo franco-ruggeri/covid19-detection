@@ -46,7 +46,7 @@ fi
 filename="$HOME/.local/share/applications/covid19-detector.desktop"
 {
   echo "[Desktop Entry]"
-  echo "Version=0.3.0"
+  echo "Version=0.3.6"
   echo "Type=Application"
   echo "Terminal=false"
   echo "Exec=bash -i -c '$exec_cmd'"
