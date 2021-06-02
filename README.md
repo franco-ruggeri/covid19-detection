@@ -20,6 +20,8 @@ pip install covid19-detection
 ```
 However, in this case you have to provide the trained models to the application. You can decide either to download the [best models we trained](https://drive.google.com/drive/folders/1x7_xh1xNcuvT8j29y7pTyk_3nrFHNZd2?usp=sharing) or to train your own models with the [command-line tools](3-command-line-suite).
 
+Also in case of Windows 10, you can download this [script](https://github.com/franco-ruggeri/dd2424-covid19-detection/blob/windows/scripts/R-NET.bat) and double click it from the folder you want to save the models. The script will install the package and download the models. Then you have to launch the application from command prompt as shown in step 2.
+
 ## 2. Application
 If you have done the recommended installation, you can launch the application by searching it among the applications. Otherwise, you can launch it from the terminal:
 ```
